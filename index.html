@@ -42,7 +42,7 @@
   <div class="notes">
     <p>レーンの名前を押すと、その一つだけ止まる・戻る。止めている間も数は裏で進み続ける。最初は算木・60進・ヨルバの三つだけ鳴っている。</p>
     <p>組：各レーンの「組」の欄で、そのレーンを別の組へ移せる。移すと、星の軌道面（A・B）、輪の位置（D）、団地の並び（E）も一緒に変わる。選んだ組はこのブラウザが覚える。「組を元に戻す」で最初の分類に戻る。</p>
-    <p>重なりの見分け：同じ瞬間に二つ以上が強く鳴った時、なぜ鳴ったか（何ごと・何の手前・素数・偶然など）を比べる。理由が同じなら「別名」（太い線）、違えば「違う理由」（細い線）、偶然のレーンが混じれば「理由のない重なり」（点線）。もう一つ、「すれ違い」（長い破線）：同じ理由で鳴るはずの二人が、衝突のずれのせいで同じ瞬間に居られない時。片方が鳴った時、もう片方は同じ理由で何カウント遅れて来るかを記録する。理由の書き方は、このアプリでの整理の仕方で、一つの見方に過ぎない。トポロジーと呼吸と心拍は、ほぼ毎回のように強く鳴るので、居合わせただけの重なりが増える。この二つは音は鳴らすが、重なりの判定とCSVには入れない。衝突・蝙蝠・震える組（シューマン共振ほか）も同じく入れない。</p>
+    <p>重なりの見分け：同じ瞬間に二つ以上が強く鳴った時、なぜ鳴ったか（何ごと・何の手前・素数・偶然など）を比べる。理由が同じなら「別名」（太い線）、違えば「違う理由」（細い線）、偶然のレーンが混じれば「理由のない重なり」（点線）。偶然は二つに分けて記録する：易は「追い切れない偶然」（決まっているが追い切れない）、崩壊は「決まらない偶然」（実測の記録）。どちらも点線だが、F 理由では別々の丸へ線が引かれる。もう一つ、「すれ違い」（長い破線）：同じ理由で鳴るはずの二人が、衝突のずれのせいで同じ瞬間に居られない時。片方が鳴った時、もう片方は同じ理由で何カウント遅れて来るかを記録する。理由の書き方は、このアプリでの整理の仕方で、一つの見方に過ぎない。トポロジーと呼吸と心拍は、ほぼ毎回のように強く鳴るので、居合わせただけの重なりが増える。この二つは音は鳴らすが、重なりの判定とCSVには入れない。衝突・蝙蝠・震える組（シューマン共振ほか）も同じく入れない。</p>
     <p>回の始まり：はじめから（または最初の鳴らす）の時に、その回の偶然の出どころを一行残す。易の卦の種、崩壊の記録をどこまで読んだか、自動編成と入る順の設定。易の種と崩壊の位置が同じなら、易と崩壊の並びは同じになる。衝突でずれる向きだけはブラウザの擬似乱数で、種を残せないので、同じ回の完全な再現はできない。</p><p>出来事：レーンが入った・抜けた瞬間（手で押した、自動編成で入った、すれ違いで休んだ、崩壊に連れ出された、入り直した）と、自動編成を入れた・切った瞬間も、関係が「出来事」の行としてCSVに残る。「同時に鳴った数」の欄には、その時に鳴っているレーンの数が入る。前後で比べる時の目印になる。</p><p>CSV：重なりとすれ違いはすべて記録され（すれ違いの相手、第3の相手、第3の数列の相手は「関係相手」の列、遅れや間隔は「間隔・遅れ」の列）、下の「重なりをCSVで保存」で書き出せる。一行が一つのレーン。何回目の通しか、共通カウント、そのレーンの数（ずれ込み）、理由、関係（別名・違う理由・理由なし）が入る。はじめからを押すと「回」が一つ進み、記録は消えない。ページを閉じると消える。</p>
     <p>自動編成：入れると一度全員が抜け、「入る間隔」ごとに一人ずつ入ってくる。「入る順：偶然」なら、入ってくる順番を崩壊の記録（後ろから読む）で並べ替える。毎回違う順になり、誰と誰が先に出会うかが変わる。周期やずれには触らない。「入る順：組の順」なら組の順で入る。入るのはそのレーン自身の区切りの瞬間。集まった後は、すれ違いが続いたレーンが一度休み、休みの後で同じ理由の仲間と揃える瞬間に入り直す（入り直す時、ずれは0に戻る）。仲間が見つからないまま長く休んだら、自分の区切りで戻る。崩壊の介入が「あり」なら、崩壊の記録をレーンとは逆に後ろから読み、たまに誰か一人を連れ出す。素数のように別名を持たない数え方は、すれ違いでは休まず、崩壊にだけ連れ出される。</p>
     <p>数を変える：各レーンの数字欄で区切りを変えられる。鳴らしたままでも、次のカウントからすぐ反映される。0にするとその区切りは鳴らない。</p>
@@ -64,7 +64,7 @@ function showInfo(){const b=bodies.get(selected);if(!b)return;$('info').replaceC
 window.addEventListener('orbitState',e=>{const s=e.detail;if((s.co||s.sw)&&s.n!==lastN)coShow(s.n,s.co,s.sw);if(s.grp){for(const id in s.grp){GRI[id]=s.grp[id];PLANE[id]=GPL[s.grp[id]]||[0,0]}if(s.grp.td!=null){GRI.tdm=s.grp.td;PLANE.tdm=GPL[s.grp.td]||[0,0]}}if(!state)init(s.defs);if(s.n!==lastN){if(s.n<lastN){bodies.forEach(b=>{b.trail=[];b.tilt=0});collisionCount=0;setTurn(1)}n=s.n;stamp=performance.now();lastN=s.n;s.defs.forEach(d=>{let b=bodies.get(d.id);if(d.on&&d.ev?.length)b.flash=Math.max(.35,...d.ev.map(x=>x.lv||.5))});{const td=bodies.get('td'),tm=bodies.get('tdm'),S=s.P.tdS,M=s.P.tdM;if(td&&tm&&td.on&&s.n>0){if(s.n%S!==0)td.flash=0;if(s.n%M===0)tm.flash=1;const gcd=(a,b)=>b?gcd(b,a%b):a,L=S*M/gcd(S,M);if(s.n%L===0){$('status').textContent=s.n+'　大潮：太陽と月の満潮が重なった';td.flash=1;tm.flash=1}}}if(s.msg){$('status').textContent=s.msg;if(s.msg.includes('戻ってきた'))setTurn(turnNo+1);if(s.msg.includes('衝突')){collisionCount++;bodies.forEach(b=>{if(b.on)b.tilt+=Math.sin(b.i+collisionCount)*.16})}}}state=s;{const tm=bodies.get('tdm');if(tm){const td=s.defs.find(d=>d.id==='td');tm.on=!!(td&&td.on)}}s.defs.forEach(d=>{const b=bodies.get(d.id);b.on=d.on;const el=document.querySelector(`[data-id="${d.id}"]`);el.classList.toggle('off',!d.on);const c=cycle(d.id,s.P);el.lastChild.textContent=c?`${Math.round(c*10)/10} ct`:'非周期'});$('count').textContent=s.n;$('orbitPlay').textContent=s.playing?'Ⅱ 一時停止':'▶ 音と時間をはじめる';$('orbitTempo').value=s.rate;$('rate').textContent=s.rate+' / 分';});
 
 const CO={edges:[],t:-1e9,tm:null};
-function coBuild(n,it){const cl=new Map(),ch=[];it.forEach(x=>{if(x.key==='chance'){ch.push(x);return}if(!cl.has(x.key))cl.set(x.key,[]);cl.get(x.key).push(x)});const edges=[],lines=[];const reps=[];
+function coBuild(n,it){const cl=new Map(),ch=[];it.forEach(x=>{if(x.key.startsWith('chance')){ch.push(x);return}if(!cl.has(x.key))cl.set(x.key,[]);cl.get(x.key).push(x)});const edges=[],lines=[];const reps=[];
 cl.forEach((m,key)=>{reps.push(m[0]);for(let i=1;i<m.length;i++)edges.push([m[i-1].id,m[i].id,0]);if(m.length>=2)lines.push('<i></i><b>別名</b>'+m.slice(0,4).map(x=>x.name).join('・')+(m.length>4?'…':'')+' ＝ '+m[0].label)});
 for(let i=1;i<reps.length;i++)edges.push([reps[i-1].id,reps[i].id,1]);
 if(reps.length>=2)lines.push('<i class="t1"></i><b>違う理由</b>'+reps.slice(0,3).map(x=>x.name+'＝'+x.label).join(' ／ ')+(reps.length>3?' …':''));
@@ -160,7 +160,7 @@ drawCoE(now);if(DN.fill){g.fillStyle='#e04032';g.fillRect(0,ground-1,W,2);g.save
 const RY_T=160;function ryHeat(a){return a.h*Math.exp(-(RY.lastN-a.ln)/RY_T)}
 let RY3=[],RY3t={},RYS=[];window.addEventListener('orbitState',e=>{const s=e.detail;RY3=s.third||[];RYS=(s.seq||[]).filter(q=>q.on&&q.pts.length);if(s.th)s.th.forEach(k=>RY3t[k]=performance.now())});
 const RY={acc:new Map(),sw:new Map(),rs:[],ri:{},use:[],flash:[],lastN:-1,snd:false,ctx:null};
-function ryRel(it){const c={};it.forEach(x=>c[x.key]=(c[x.key]||0)+1);const kinds=new Set(it.filter(x=>x.key!=='chance').map(x=>x.key)).size;return x=>x.key==='chance'?2:(c[x.key]>=2?0:(kinds>=2?1:2))}
+function ryRel(it){const c={};it.forEach(x=>c[x.key]=(c[x.key]||0)+1);const kinds=new Set(it.filter(x=>!x.key.startsWith('chance')).map(x=>x.key)).size;return x=>x.key.startsWith('chance')?2:(c[x.key]>=2?0:(kinds>=2?1:2))}
 function ryR(key,label){if(!(key in RY.ri)){RY.ri[key]=RY.rs.length;RY.rs.push(label);RY.use.push(0)}return RY.ri[key]}
 const RY_P=[0,2,4,7,9,12,14,16,19,21,24];
 function ryTone(at,f,p,dec,type){const c=RY.ctx,o=c.createOscillator();o.type=type||'sine';o.frequency.value=f;const gg=c.createGain();gg.gain.setValueAtTime(.0001,at);gg.gain.exponentialRampToValueAtTime(p,at+.008);gg.gain.exponentialRampToValueAtTime(.0001,at+dec);o.connect(gg);gg.connect(RY.m);o.start(at);o.stop(at+dec+.05)}
@@ -425,18 +425,18 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
       case 'ci': return m%221===0?'mod:221':(m%13===0?'mod:13':'mod:17');
       case 'bd': { const N=P.bdN,pos=((m-1)%N)+1; return pos===N?'mod:'+N:'nose'; }
       case 'im': return 'rot:'+(((m%4)+4)%4);
-      case 'ek': case 'rd': return 'chance';
+      case 'ek': return 'chance:ek'; case 'rd': return 'chance:rd';
     }
     return 'other:'+k;
   }
-  function whyLabel(key){ const [a,b]=key.split(':'); return ({man:b==='1'?'万の区切り':(b==='2'?'億の区切り':'万進の'+b+'段目'),sekki:b?['春分','','','','','','夏至','','','','','','秋分','','','','','','冬至'][+b]||'二至二分':'節気',bon:'ぼん（濁る）',pon:'ぽん（破裂）',mod:b+'ごと',pre:b+'の手前',post:b+'の直後',pow:b+'の冪',tri:'三角数',sq:'四角数',shape:'字の形',chance:'偶然',rot:['1','i','−1','−i'][+b]+'を向く',prime:'素数',fib:'フィボナッチ数',hifumi:'倍の音',ones:'1の多い数',tide:'潮の重なり',heart:'心拍',nose:'体の真ん中',up:'目印から離れる',tala:'16拍の'+(+b+1)+'拍目',clave:'16刻みの'+(+b+1)+'打目'})[a]||key; }
+  function whyLabel(key){ const [a,b]=key.split(':'); return ({man:b==='1'?'万の区切り':(b==='2'?'億の区切り':'万進の'+b+'段目'),sekki:b?['春分','','','','','','夏至','','','','','','秋分','','','','','','冬至'][+b]||'二至二分':'節気',bon:'ぼん（濁る）',pon:'ぽん（破裂）',mod:b+'ごと',pre:b+'の手前',post:b+'の直後',pow:b+'の冪',tri:'三角数',sq:'四角数',shape:'字の形',chance:b==='ek'?'追い切れない偶然':(b==='rd'?'決まらない偶然':'偶然'),rot:['1','i','−1','−i'][+b]+'を向く',prime:'素数',fib:'フィボナッチ数',hifumi:'倍の音',ones:'1の多い数',tide:'潮の重なり',heart:'心拍',nose:'体の真ん中',up:'目印から離れる',tala:'16拍の'+(+b+1)+'拍目',clave:'16刻みの'+(+b+1)+'打目'})[a]||key; }
   const CO_LOG=[], CO_MAX=500000; let runNo=1, coDropped=0;
   function coLog(n,it){
     const cnt={}; it.forEach(x=>cnt[x.key]=(cnt[x.key]||0)+1);
-    const kinds=new Set(it.filter(x=>x.key!=='chance').map(x=>x.key)).size;
+    const kinds=new Set(it.filter(x=>!x.key.startsWith('chance')).map(x=>x.key)).size;
     const D=new Date(),q=(x,l=2)=>String(x).padStart(l,'0'),stamp=D.getFullYear()+'-'+q(D.getMonth()+1)+'-'+q(D.getDate())+' '+q(D.getHours())+':'+q(D.getMinutes())+':'+q(D.getSeconds())+'.'+q(D.getMilliseconds(),3);
     it.forEach(x=>{
-      const rel=x.key==='chance'?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし'));
+      const rel=x.key.startsWith('chance')?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし'));
       if(CO_LOG.length>=CO_MAX){ coDropped++; return; }
       CO_LOG.push([runNo,n,x.name,n+(off[x.id]||0),off[x.id]||0,x.label,x.key,rel,it.length,'','',stamp]);
     });
@@ -704,7 +704,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         for(let i=0;i<outs.length;i++) for(let j=i+1;j<outs.length;j++){ const pk=[outs[i],outs[j]].sort().join('|'); const q=SEQ3[pk]||(SEQ3[pk]={pts:[],total:0}); const gap=q.pts.length?n-q.pts[q.pts.length-1]:0; q.pts.push(n); if(q.pts.length>160) q.pts.shift(); q.total++; const [a,b]=pk.split('|'); seqLog(n,a,b,gap); } }
       let thTick=null;
       if(!muted){ const hit3=new Set();
-        if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key==='chance'||B.key==='chance') continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=P3[pk]||(P3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
+        if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key.startsWith('chance')||B.key.startsWith('chance')) continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=P3[pk]||(P3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
           const g0=p.gaps[0]; if(p.gaps.length===3&&p.gaps.every(x=>x===g0)&&g0>=4&&!TH3.some(t=>t.pk===pk)&&TH3.length<3&&!(p.cool>n)){ const [a,b]=pk.split('|'); if(!p.nums.has(g0)&&g0!==Math.round((CYC[a]||(()=>0))())&&g0!==Math.round((CYC[b]||(()=>0))())){ const va=[],vb=[]; if(g0<=400) for(let q=0;q<g0;q++){ const m=n-g0+q; if(strongAt(a,m+(off[a]||0))) va.push(q); if(strongAt(b,m+(off[b]||0))) vb.push(q); } TH3.push({pk,a,b,g:g0,anchor:n,miss:0,born:n,va,vb,life:Math.max(240,g0*4)}); if(!msg) msg=nm(a)+'と'+nm(b)+'の間に、第3の拍（'+g0+'ごと）が生まれた'; thLog(n,a,b,g0,'生まれた'); } } } }
         for(let i=TH3.length-1;i>=0;i--){ const t=TH3[i]; if(n-t.born>=t.life){ TH3.splice(i,1); P3[t.pk]={last:n,gaps:[],nums:new Set(),cool:n+t.life}; if(!msg) msg=nm(t.a)+'と'+nm(t.b)+'の第3の拍が、'+t.life+'カウント生きて席を空けた'; thLog(n,t.a,t.b,t.g,'席を空けた'); continue; } if(n<=t.anchor||(n-t.anchor)%t.g!==0) continue; if(hit3.has(t.pk)) t.miss=0; else t.miss++;
           if(t.miss>=2){ TH3.splice(i,1); P3[t.pk]={last:n,gaps:[],nums:new Set()}; if(!msg) msg=nm(t.a)+'と'+nm(t.b)+'の第3の拍が消えた（'+(n-t.born)+'カウント生きた）'; thLog(n,t.a,t.b,t.g,'消えた'); continue; }
@@ -888,9 +888,9 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
       const it=[]; onSet.forEach(k=>{ if(CO_SKIP.has(k)) return; const lv=(e[k]||[]).reduce((a,x)=>Math.max(a,x.lv||0),0); if(lv>=(CO_CH.has(k)?.25:.5)) it.push({id:k,key:why(k,n+(so[k]||0))}); });
       if(W==='D') th.forEach(t=>{ if(n>t.anchor&&(n-t.anchor)%t.g===0) it.push({id:tid(t),key:'third:'+t.g}); });
       let co=null;
-      if(it.length>=2){ co=it; const cnt={}; it.forEach(x=>cnt[x.key]=(cnt[x.key]||0)+1); const kinds=new Set(it.filter(x=>x.key!=='chance').map(x=>x.key)).size; it.forEach(x=>{ const r=x.key==='chance'?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし')); st.co[r]++; }); }
+      if(it.length>=2){ co=it; const cnt={}; it.forEach(x=>cnt[x.key]=(cnt[x.key]||0)+1); const kinds=new Set(it.filter(x=>!x.key.startsWith('chance')).map(x=>x.key)).size; it.forEach(x=>{ const r=x.key.startsWith('chance')?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし')); st.co[r]++; }); }
       const hit3=new Set();
-      if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key==='chance'||B.key==='chance') continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=p3[pk]||(p3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
+      if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key.startsWith('chance')||B.key.startsWith('chance')) continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=p3[pk]||(p3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
         const g0=p.gaps[0]; if(p.gaps.length===3&&p.gaps.every(x=>x===g0)&&g0>=4&&!th.some(t=>t.pk===pk)&&th.length<3&&!(p.cool>n)){ const [a,b]=pk.split('|'); if(!p.nums.has(g0)&&g0!==Math.round((CYC[a]||(()=>0))())&&g0!==Math.round((CYC[b]||(()=>0))())){
           th.push({pk,a,b,g:g0,anchor:n,miss:0,born:n,life:Math.max(240,g0*4)}); const after=(W==='C'&&lastFb)?('直前の衝突はフィードバックが相手を変えたもの：'+lastFb.n+'（寄与：'+(lastFb.src.map(pn).join(' / ')||'—')+'）の後'):''; births.push({n,pk,g:g0,row:out.length}); (tp.born=tp.born||[]).push({pk,g:g0}); rec(n,'第3の拍 誕生',pn(pk),'',g0+'ごと',after); } } } }
       for(let i=th.length-1;i>=0;i--){ const t=th[i];
@@ -969,9 +969,9 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
       if(muted) return;
       const it=[]; onSet.forEach(k=>{ if(CO_SKIP.has(k)) return; const lv=(e[k]||[]).reduce((a,x)=>Math.max(a,x.lv||0),0); if(lv>=(CO_CH.has(k)?.25:.5)) it.push({id:k,key:why(k,n+(so[k]||0))}); });
       let co=null;
-      if(it.length>=2){ co=it; const cnt={}; it.forEach(x=>cnt[x.key]=(cnt[x.key]||0)+1); const kinds=new Set(it.filter(x=>x.key!=='chance').map(x=>x.key)).size; it.forEach(x=>{ const r=x.key==='chance'?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし')); st.co[r]++; }); }
+      if(it.length>=2){ co=it; const cnt={}; it.forEach(x=>cnt[x.key]=(cnt[x.key]||0)+1); const kinds=new Set(it.filter(x=>!x.key.startsWith('chance')).map(x=>x.key)).size; it.forEach(x=>{ const r=x.key.startsWith('chance')?'理由なし':(cnt[x.key]>=2?'別名':(kinds>=2?'違う理由':'理由なし')); st.co[r]++; }); }
       const hit3=new Set();
-      if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key==='chance'||B.key==='chance') continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=p3[pk]||(p3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
+      if(co){ for(let i=0;i<co.length;i++) for(let j=i+1;j<co.length;j++){ const A=co[i],B=co[j]; if(A.key===B.key||A.key.startsWith('chance')||B.key.startsWith('chance')) continue; const pk=[A.id,B.id].sort().join('|'); hit3.add(pk); const p=p3[pk]||(p3[pk]={last:n,gaps:[],nums:new Set()}); [A.key,B.key].forEach(k=>{ const v=+String(k).split(':')[1]; if(v) p.nums.add(v); }); if(p.last!==n){ p.gaps.push(n-p.last); if(p.gaps.length>3) p.gaps.shift(); p.last=n; }
         const g0=p.gaps[0]; if(p.gaps.length===3&&p.gaps.every(x=>x===g0)&&g0>=4&&!th.some(t=>t.pk===pk)&&th.length<3&&!(p.cool>n)){ const [a,b]=pk.split('|'); if(!p.nums.has(g0)&&g0!==Math.round((CYC[a]||(()=>0))())&&g0!==Math.round((CYC[b]||(()=>0))())){
           th.push({pk,a,b,g:g0,anchor:n,miss:0,born:n,life:Math.max(240,g0*4)}); const after=(W==='C'&&lastFb)?('直前の衝突はフィードバックが相手を変えたもの：'+lastFb.n+'（寄与：'+(lastFb.src.map(pn).join(' / ')||'—')+'）の後'):''; births.push({n,pk,g:g0,row:out.length}); rec(n,'第3の拍 誕生',pn(pk),'',g0+'ごと',after); } } } }
       for(let i=th.length-1;i>=0;i--){ const t=th[i];
