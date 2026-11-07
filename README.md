@@ -25,6 +25,8 @@ https://github.com/user-attachments/assets/e6b9137c-d696-4716-937c-bf1f7df453fb
 
 好きに使って、改造して、見せてくれたら嬉しい。
 
+画面は左上のボタンで日本語 ⇄ English を切り替えられる（最初はブラウザの言語に合わせる）。書き出すCSVは、他のアプリ（para grooveat など）が読めるように日本語のまま。
+
 ---
 
 The world holds many ways of counting.
@@ -40,4 +42,6 @@ Decide which countings stay, and which come and go, and the relationship itself 
 Below it, the Galaxy of Other Grammars lets you watch the same relationships from seven viewpoints: orbits, a galaxy, apartment blocks, geometry, and more.
 
 This is not a device for reproducing the universe.
+The screen switches between Japanese and English with the button at the top left (it follows your browser language at first). Exported CSVs stay in Japanese so other apps (such as para grooveat) can read them.
+
 When different grammars come to exist in the
