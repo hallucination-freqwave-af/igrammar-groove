@@ -1490,7 +1490,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     const panels=worlds.length, pw=W/panels, show=$i('showev').checked;
     { const zt=thirdOnly?2:1; zk+=(zt-zk)*.25; if(Math.abs(zt-zk)<.01) zk=zt; const tb=$i('third'); if(tb){ const alive=worlds.some(sp=>liveAt(sp,n).length); tb.disabled=!(alive||thirdOnly); } }
     worlds.forEach((sp,pi)=>{
-      const f=sp.frames[n-1]; if(!f) return; const ox=pi*pw, cxm=ox+pw/2, cym=H/2+10, R=Math.min(pw,H)*(tate?.30:.36);
+      const f=sp.frames[n-1]; if(!f) return; const ox=pi*pw, cxm=ox+pw/2, cym=tate?H*.40:H/2+10, R=Math.min(pw,H)*(tate?.30:.36); // 縦の時は上寄せ（下はリール・ショートの字幕やボタンがかかる）
       const ids=meta.lanes.filter(k=>k!=='cl'), pos={};
       ids.forEach((k,i)=>{ const off=(f.off&&f.off[k])||0, a=-Math.PI/2+i/ids.length*Math.PI*2+off*.03; pos[k]=[cxm+Math.cos(a)*R,cym+Math.sin(a)*R]; });
       // 緊張：中心の円
