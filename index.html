@@ -1461,6 +1461,8 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     when=ac.currentTime+.06; queue=[];
     handle=setInterval(()=>{
       const pace=Math.max(30,Math.min(3600,+$i('rate').value||600)), step=60/pace;
+      if(ac.state!=='running'){ ac.resume().catch(()=>{}); return; } // 音が止められていたら起こし直す
+      if(when<ac.currentTime){ const lag=ac.currentTime-when; index=Math.min(N,index+Math.floor(lag/step)); when=ac.currentTime+.05; } // 重くて置いていかれたら、過去の音を一気に詰め込まず今に追いつく
       while(index<N&&when<ac.currentTime+.35){ // 先読み：画面が重くて一瞬止まっても音が途切れないように
         const L=listenSet(), fs=L.map(x=>worlds[x.w].frames[index]);
         L.forEach((x,j)=>{ render(graph,fs[j],when,step,{pan:x.pan,gain:x.gain,duck:graph.duck}); cue(graph,worlds[x.w].frames[index-1],fs[j],when,x.pan,x.gain); });
