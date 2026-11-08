@@ -1537,7 +1537,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         const [x,y]=pos[k], g=glow[key], solo=f.S&&f.S.length===1&&f.S[0]===k, away=f.away&&f.away.includes(k);
         const pf=sp.frames[Math.max(0,n-9)], changed=pf&&((pf.away||[]).includes(k)!==!!away);
         if(changed){ cx.strokeStyle=away?'rgba(129,149,157,.9)':'#e0503f'; cx.setLineDash([3,3]); cx.beginPath(); cx.arc(x,y,16,0,Math.PI*2); cx.stroke(); cx.setLineDash([]); }
-        if(away){ cx.strokeStyle='rgba(129,149,157,.45)'; cx.beginPath(); cx.arc(x,y,4,0,Math.PI*2); cx.stroke(); if(ids.length<=40){ cx.fillStyle=tate?'rgba(150,170,178,.75)':'rgba(129,149,157,.35)'; cx.font=(tate?13:11)+'px system-ui'; lbl(k,x,y,cxm,cym,ox,pw); } return; }
+        if(away){ cx.strokeStyle='rgba(129,149,157,.45)'; cx.beginPath(); cx.arc(x,y,4,0,Math.PI*2); cx.stroke(); if(ids.length<=40&&!tate){ cx.fillStyle='rgba(129,149,157,.35)'; cx.font='11px system-ui'; lbl(k,x,y,cxm,cym,ox,pw); } /* 縦の時は、抜けているレーンの名前を出さない（重なり防止） */ return; }
         // 珍しい一発：音と同じ決め方（レーンの珍しさ／久しぶりさ）で、画面でも大きく光る
         if(kuseOn()&&!f.muted&&lv>=.25&&BASE_T[k]!=='drone'){ let gap=n>600?600:null; for(let m=n-1;m>=Math.max(1,n-600);m--){ const pv=sp.frames[m-1]&&sp.frames[m-1].lv[k], pl=pv==null?0:(Array.isArray(pv)?pv[0]:pv); if(pl>=.25){ gap=n-m; break; } }
           let rs=rareScore(k,gap); if(bigCo(f)&&f.co.includes(k)) rs=Math.max(rs,.65); if(rs>.3&&(!flash[key]||flash[key].n0!==n)) flash[key]={n0:n,rs}; }
