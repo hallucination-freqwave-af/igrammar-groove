@@ -1299,7 +1299,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     el.textContent=t; meta.change={nudged:nu,who:worlds[1].w.st.nudgeWho,firstSoundDiff:firstDiff,firstRelationDiff:firstRel,lastUnresolvedWith:lastUnresB,lastUnresolvedWithout:lastUnresA};
   }
   function presentAt(k,n){ const pr=meta&&meta.rules&&meta.rules.presence; if(!pr||!pr.t[k]) return true; let c=0; while(c<pr.t[k].length&&pr.t[k][c]<=n) c++; const i0=pr.init[k]!==false; return (c%2===0)?i0:!i0; }
-  function makeHand(){ window.__igHand=handToggle; window.__igNm=k=>nm(k); window.__igPresent=presentAt; window.__igIdx=()=>index; const h=$i('hand'); h.innerHTML=''; if(!meta) return; meta.lanes.filter(k=>k!=='cl').forEach(k=>{ const b=document.createElement('button'); b.textContent=nm(k).replace(/（.*）/,''); b.dataset.k=k; b.style.cssText='padding:2px 8px;font-size:12px'; b.onclick=()=>handToggle(k); h.append(b); }); paintHand(1); }
+  function makeHand(){ window.__igDiag=()=>({t:ac?ac.currentTime:null,idx:index,when,live:graph&&graph.live&&ac?graph.live.filter(x=>x.e>ac.currentTime).length:0,state:ac?ac.state:'-',lat:ac?((ac.baseLatency||0)+(ac.outputLatency||0)):0,rate:+$i('rate').value||0}); window.__igHand=handToggle; window.__igNm=k=>nm(k); window.__igPresent=presentAt; window.__igIdx=()=>index; const h=$i('hand'); h.innerHTML=''; if(!meta) return; meta.lanes.filter(k=>k!=='cl').forEach(k=>{ const b=document.createElement('button'); b.textContent=nm(k).replace(/（.*）/,''); b.dataset.k=k; b.style.cssText='padding:2px 8px;font-size:12px'; b.onclick=()=>handToggle(k); h.append(b); }); paintHand(1); }
   function paintHand(n){ $i('hand').querySelectorAll('button').forEach(b=>{ const on=presentAt(b.dataset.k,n); b.style.opacity=on?'1':'.4'; b.style.textDecoration=on?'none':'line-through'; }); }
   // ---- 止まらない出し入れ：裏で計算し直し、少し先のカウントから切り替える ----
   let liveBusy=false; const livePending=[];
@@ -2047,6 +2047,31 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
     });
     window.scrollTo(0,0);
   });
+})();
+</script>
+<script>
+/* ===== 診断（?diag を付けて開いた時だけ）：遅れの原因を見るための計器 ===== */
+(function(){
+  if(!/[?&]diag\b/.test(location.search)) return;
+  var box=document.createElement('div'); box.style.cssText='position:fixed;right:8px;top:8px;z-index:9999;background:rgba(0,0,0,.82);color:#e5efdf;font:13px/1.55 ui-monospace,Menlo,monospace;padding:8px 10px;border:1px solid #2c4a50;border-radius:8px;white-space:pre;pointer-events:none';
+  document.addEventListener('DOMContentLoaded',function(){ document.body.appendChild(box); });
+  var last=null, frames=[], worst=0; (function f(t){ if(frames.length) worst=Math.max(worst,t-frames[frames.length-1]); frames.push(t); if(frames.length>240) frames.shift(); requestAnimationFrame(f); })(performance.now());
+  setInterval(function(){
+    var d=window.__igDiag&&window.__igDiag(), now=performance.now();
+    if(!d||d.t==null){ box.textContent='診断：再生を始めると数字が出ます'; return; }
+    if(last){ var dw=(now-last.w)/1000, da=d.t-last.t, dc=d.idx-last.idx, exp=d.rate/60;
+      var clock=da/dw, cps=dc/dw, lead=d.when-d.t;
+      var bad=function(ok){ return ok?'  ':'⚠ '; };
+      box.textContent=
+        bad(Math.abs(cps-exp)<exp*.05)+'カウント/秒  '+cps.toFixed(1)+'  （正しくは '+exp.toFixed(1)+'）\n'+
+        bad(clock>.97)+'音の時計の速さ '+(clock*100).toFixed(0)+'%\n'+
+        bad(lead>.05)+'音の予約の余裕 '+(lead*1000).toFixed(0)+' ms\n'+
+        bad(worst<60)+'画面の一番長い止まり '+worst.toFixed(0)+' ms\n'+
+        '  同時に鳴ってる音  '+d.live+'\n'+
+        '  状態 '+d.state+'  遅延 '+(d.lat*1000).toFixed(0)+' ms';
+      worst=0; }
+    last={w:now,t:d.t,idx:d.idx};
+  },1000);
 })();
 </script>
 </body></html>
