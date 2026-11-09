@@ -1177,7 +1177,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
   const TIMBRES={drone:'持続音',lowperc:'低い打楽器',mallet:'木琴',metal:'金属音',pulse:'電子パルス',wood:'木の打楽器',pluck:'はじく音',bell:'鐘',
     skin:'皮の太鼓',gamelan:'ガムラン',jaw:'口琴',kalimba:'親指ピアノ',noise:'ノイズ',glitch:'グリッチ',sub:'サブベース',hum:'ハミング',breath:'息',ekick:'重いキック',estab:'潰れたスタブ',ehit:'金属の打撃',eclap:'硬いクラップ',ebass:'歪んだベース',vlow:'地鳴り',vmid:'震える弦',vhigh:'金属のさざ波',throat:'喉の唸り'};
   const PALETTE={民族:{hold:'gamelan',list:['skin','kalimba','gamelan','jaw','skin','kalimba']},電子:{hold:'ebass',byPitchE:true,list:['ekick','estab','ehit']},振動:{hold:'vlow',byPitch:true,list:['vlow','vmid','vhigh']},混ぜ:{hold:null,list:['skin','gamelan','jaw','kalimba','noise','glitch','sub','hum','breath','throat','mallet','wood','pluck','metal','bell','lowperc']}};
-  const BASE_T={}; let palGain=1; const PAL_GAIN={電子:1.15,振動:.7};
+  const BASE_T={}; let palGain=1; const PAL_GAIN={電子:1.15,振動:1.15};
   const PRESET={tp:'drone',hb:'lowperc',hf:'mallet',pr:'metal',bi:'pulse',js:'wood',sr:'drone',hm:'drone',su:'drone',td:'drone',cs:'bell',rd:'pulse',im:'bell'};
   const CYCLE=['mallet','wood','pluck','metal','pulse','bell','lowperc'];
   const PENT=[0,3,5,7,10];
@@ -1366,6 +1366,10 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     const ctx=g.ctx, L=laneOut(g,k,opts.pan); let amp=Math.max(0,Math.min(1,lv))*m.volume*(opts.gain||1)*palGain;
     const f=220*Math.pow(2,(m.pitch+(semi||0)+(opts.bend||0))/12); let len=m.len;
     const vg=ctx.createGain(); let dst=vg;
+    // 同時に鳴る音の上限：重なりすぎて重くならないように、超えたら一番古い音を静かに消す（書き出し用の計算には使わない）
+    if(!(typeof OfflineAudioContext!=='undefined'&&ctx instanceof OfflineAudioContext)){ const MAXV=40; g.live=(g.live||[]).filter(x=>x.e>ctx.currentTime);
+      if(g.live.length>=MAXV){ const o=g.live.shift(); try{ const now=Math.max(ctx.currentTime,t-.005); o.v.gain.cancelScheduledValues(now); o.v.gain.setTargetAtTime(.0001,now,.012); }catch(e){} }
+      g.live.push({v:vg,e:t+2.5}); }
     // 癖：強弱・伸びの差・切れ・うねり（表現だけ。計算には触らない）
     if(kuseOn()&&opts.n!=null){ const key=k+'|'+(opts.pan==null?'':opts.pan); g.lastOn=g.lastOn||{}; g.chk=g.chk||{};
       const prev=g.lastOn[key], gap=(prev==null||opts.n<=prev)?99:opts.n-prev; g.lastOn[key]=opts.n;
@@ -1411,12 +1415,13 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         const s=ctx.createBufferSource(); s.buffer=g.noise; s.connect(bp); s.start(t,ko,d+.05); break; }
       case 'ebass': { const d=Math.max(.3,step*2*len); const dr=drive(g,3); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=420; dr.connect(lp); lp.connect(vg); env(ctx,vg,t,.22*amp,.006,d); osc(ctx,'sawtooth',Math.max(32,f/4),t,d,dr); osc(ctx,'sine',Math.max(32,f/4),t,d,dr); break; }
       // ---- 振動：鳴ったあとも震えが残る。低い所から高い所まで ----
-      case 'vlow': { const d=Math.max(.6,1.4*len); env(ctx,vg,t,.26*amp,.05,d); const tr=ctx.createGain(); tr.gain.value=.7; tr.connect(vg); const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=4.5+ko*2; lg.gain.value=.3; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
-        const b=Math.max(32,f/4); osc(ctx,'sine',b,t,d,tr); osc(ctx,'sine',b*1.012,t,d,tr); osc(ctx,'triangle',b*2,t,d*.6,tr); break; }
-      case 'vmid': { const d=Math.max(.4,.9*len); env(ctx,vg,t,.2*amp,.004,d); const tr=ctx.createGain(); tr.gain.value=.65; const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=17+ko*9; lg.gain.value=.35; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
-        const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=4; bp.frequency.setValueAtTime(f*6,t); bp.frequency.exponentialRampToValueAtTime(f*2,t+d); tr.connect(bp); bp.connect(vg); osc(ctx,'sawtooth',f,t,d,tr); osc(ctx,'sawtooth',f*1.006,t,d,tr); break; }
-      case 'vhigh': { const d=Math.max(.6,1.5*len); env(ctx,vg,t,.08*amp,.002,d); const tr=ctx.createGain(); tr.gain.value=.6; tr.connect(vg); const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=11+ko*8; lg.gain.value=.4; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
-        [1,1.5,2.37,3.11].forEach((r,j)=>osc(ctx,'sine',f*4*r,t,d*(1-j*.18),tr)); break; }
+      case 'vlow': { const d=Math.max(.2,.4*len); env(ctx,vg,t,.34*amp,.002,d); const tr=ctx.createGain(); tr.gain.value=.75; tr.connect(vg); const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=1/(2*step); lg.gain.value=.25; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
+        const b=Math.max(34,f/4), o=osc(ctx,'sine',b*2.2,t,d,tr); o.frequency.exponentialRampToValueAtTime(b,t+.04); osc(ctx,'sine',b*1.012,t,d,tr); break; }  // 低い：ドンと頭を出して、すぐ引く。揺れは2カウントで一回
+      case 'vmid': { const d=Math.max(.2,.5*len); env(ctx,vg,t,.22*amp,.002,d); const tr=ctx.createGain(); tr.gain.value=.6; const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=1/step; lg.gain.value=.4; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
+        const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=5; bp.frequency.setValueAtTime(f*8,t); bp.frequency.exponentialRampToValueAtTime(f*2,t+.15); tr.connect(bp); bp.connect(vg); osc(ctx,'sawtooth',f,t,d,tr); osc(ctx,'sawtooth',f*1.006,t,d,tr);
+        const cg=ctx.createGain(); env(ctx,cg,t,.3*amp,.0005,.015); const s=ctx.createBufferSource(); s.buffer=g.noise; s.connect(cg); cg.connect(vg); s.start(t,ko,.03); break; }  // 真ん中：弦をはじいた頭のあと、1カウントの速さで震える
+      case 'vhigh': { const d=Math.max(.12,.25*len); env(ctx,vg,t,.1*amp,.0008,d); const tr=ctx.createGain(); tr.gain.value=.5; tr.connect(vg); const lf=ctx.createOscillator(), lg=ctx.createGain(); lf.frequency.value=2/step; lg.gain.value=.5; lf.connect(lg); lg.connect(tr.gain); lf.start(t); lf.stop(t+d+.1);
+        [1,1.5,2.37].forEach((r,j)=>osc(ctx,'sine',f*4*r,t,d*(1-j*.2),tr)); const sg=ctx.createGain(); sg.gain.value=.3; vg.connect(sg); sg.connect(g.space); break; }  // 高い：チリッと短く、奥に少し響かせて立体に
       case 'bell': { const d=1.6*len; env(ctx,vg,t,.1*amp,.002,d); osc(ctx,'sine',f*4,t,d,vg); osc(ctx,'sine',f*4*2.01,t,d*.5,vg); break; }
     }
   }
