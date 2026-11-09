@@ -1570,7 +1570,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         const [x,y]=pos[k], g=glow[key], solo=f.S&&f.S.length===1&&f.S[0]===k, away=f.away&&f.away.includes(k);
         const pf=sp.frames[Math.max(0,n-9)], changed=pf&&((pf.away||[]).includes(k)!==!!away);
         if(changed){ cx.strokeStyle=away?'rgba(129,149,157,.9)':'#e0503f'; cx.setLineDash([3,3]); cx.beginPath(); cx.arc(x,y,16,0,Math.PI*2); cx.stroke(); cx.setLineDash([]); }
-        if(away&&window.__igSymOn&&window.__igSYM[k]){ cx.save(); cx.translate(x,y); cx.strokeStyle=cx.fillStyle='rgba(129,149,157,.35)'; cx.lineWidth=1; cx.lineCap=cx.lineJoin='round'; window.__igSYM[k](cx,window.__igGrid?11:7); cx.restore(); if(window.__igGrid){ cx.fillStyle='rgba(129,149,157,.4)'; cx.font='9px system-ui'; cx.textAlign='center'; cx.fillText(nm(k).replace(/（.*）/,''),x,y+22); cx.textAlign='left'; } return; }
+        if(away&&window.__igSymOn&&window.__igSYM[k]){ cx.save(); cx.translate(x,y); cx.strokeStyle=cx.fillStyle='rgba(129,149,157,.35)'; cx.lineWidth=1; cx.lineCap=cx.lineJoin='round'; window.__igSYM[k](cx,window.__igGrid?11:7); cx.restore(); if(window.__igGrid){ cx.fillStyle='rgba(170,190,196,.75)'; cx.font='600 10px system-ui'; cx.textAlign='center'; cx.fillText(nm(k).replace(/（.*）/,''),x,y+22); cx.textAlign='left'; } return; }
         if(away){ cx.strokeStyle='rgba(129,149,157,.45)'; cx.beginPath(); cx.arc(x,y,4,0,Math.PI*2); cx.stroke(); if(ids.length<=40&&!tate){ cx.fillStyle='rgba(129,149,157,.35)'; cx.font='11px system-ui'; lbl(k,x,y,cxm,cym,ox,pw); } /* 縦の時は、抜けているレーンの名前を出さない（重なり防止） */ return; }
         // 珍しい一発：音と同じ決め方（レーンの珍しさ／久しぶりさ）で、画面でも大きく光る
         if(kuseOn()&&!f.muted&&lv>=.25&&BASE_T[k]!=='drone'){ let gap=n>600?600:null; for(let m=n-1;m>=Math.max(1,n-600);m--){ const pv=sp.frames[m-1]&&sp.frames[m-1].lv[k], pl=pv==null?0:(Array.isArray(pv)?pv[0]:pv); if(pl>=.25){ gap=n-m; break; } }
@@ -1579,7 +1579,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         if(fl&&age>=0&&age<16){ const q=age/16, hue=(150+i*29)%360; cx.strokeStyle=`hsla(${hue},70%,78%,${(1-q)*.9})`; cx.lineWidth=1+2*fl.rs*(1-q); cx.beginPath(); cx.arc(x,y,10+80*fl.rs*Math.sqrt(q+.05),0,Math.PI*2); cx.stroke(); cx.lineWidth=1;
           const gr=cx.createRadialGradient(x,y,0,x,y,40*fl.rs*(1-q)+6); gr.addColorStop(0,`hsla(${hue},80%,85%,${(1-q)*.8})`); gr.addColorStop(1,`hsla(${hue},80%,60%,0)`); cx.fillStyle=gr; cx.beginPath(); cx.arc(x,y,40*fl.rs*(1-q)+6,0,Math.PI*2); cx.fill();
           if(age<10){ cx.fillStyle=`rgba(243,239,228,${1-age/10})`; cx.font='bold '+Math.round(13+8*fl.rs)+'px system-ui'; const a=Math.atan2(y-cym,x-cxm); const nmT=DEF.find(d=>d.id===k).name.replace(/（.*）/,''); { const tw=cx.measureText(nmT).width; let tx=x+Math.cos(a)*(22+20*fl.rs)-(Math.cos(a)<0?tw:0); tx=Math.max(ox+6,Math.min(ox+pw-tw-6,tx)); cx.fillText(nmT,tx,y+Math.sin(a)*(22+20*fl.rs)+5); } } }
-        if(window.__igSymOn&&window.__igSYM[k]){ const ss=(8+5*g+(fl&&age>=0&&age<16?8*fl.rs*(1-age/16):0))*(window.__igGrid?1.45:1); if(g>.3){ const gr=cx.createRadialGradient(x,y,0,x,y,ss*1.6); gr.addColorStop(0,`hsla(${(150+i*29)%360},70%,70%,${.35*g})`); gr.addColorStop(1,`hsla(${(150+i*29)%360},70%,70%,0)`); cx.fillStyle=gr; cx.beginPath(); cx.arc(x,y,ss*1.6,0,Math.PI*2); cx.fill(); } cx.save(); cx.translate(x,y); cx.strokeStyle=cx.fillStyle=`hsla(${(150+i*29)%360},60%,${f.frozen?50:76}%,${.45+.55*g})`; cx.lineWidth=1.1+.6*g; cx.lineCap=cx.lineJoin='round'; window.__igSYM[k](cx,ss); cx.restore(); if(window.__igGrid){ cx.fillStyle=`rgba(220,229,232,${.45+.5*g})`; cx.font='9px system-ui'; cx.textAlign='center'; cx.fillText(nm(k).replace(/（.*）/,''),x,y+22); cx.textAlign='left'; } }
+        if(window.__igSymOn&&window.__igSYM[k]){ const ss=(8+5*g+(fl&&age>=0&&age<16?8*fl.rs*(1-age/16):0))*(window.__igGrid?1.45:1); if(g>.3){ const gr=cx.createRadialGradient(x,y,0,x,y,ss*1.6); gr.addColorStop(0,`hsla(${(150+i*29)%360},70%,70%,${.35*g})`); gr.addColorStop(1,`hsla(${(150+i*29)%360},70%,70%,0)`); cx.fillStyle=gr; cx.beginPath(); cx.arc(x,y,ss*1.6,0,Math.PI*2); cx.fill(); } cx.save(); cx.translate(x,y); cx.strokeStyle=cx.fillStyle=`hsla(${(150+i*29)%360},60%,${f.frozen?50:76}%,${.45+.55*g})`; cx.lineWidth=1.1+.6*g; cx.lineCap=cx.lineJoin='round'; window.__igSYM[k](cx,ss); cx.restore(); if(window.__igGrid){ cx.fillStyle=`rgba(240,245,246,${.85+.15*g})`; cx.font='700 10px system-ui'; cx.textAlign='center'; cx.fillText(nm(k).replace(/（.*）/,''),x,y+22); cx.textAlign='left'; } }
         else { cx.fillStyle=`hsla(${(150+i*29)%360},55%,${f.frozen?45:70}%,${.25+.75*g})`; cx.beginPath(); cx.arc(x,y,3+6*g+(fl&&age>=0&&age<16?10*fl.rs*(1-age/16):0),0,Math.PI*2); cx.fill(); }
         if(show&&solo){ cx.strokeStyle='rgba(255,255,255,.8)'; cx.beginPath(); cx.arc(x,y,13,0,Math.PI*2); cx.stroke(); }
         if(show&&f.shift&&f.shift.k===k){ cx.fillStyle='#e0503f'; cx.beginPath(); cx.arc(x,y,10,0,Math.PI*2); cx.fill(); }
@@ -1985,7 +1985,7 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
 
     window.__igSYM=SYM; window.__igSymOn=true;
     var $=function(id){ return document.getElementById('i-'+id); };
-    try{ Object.assign(window.__igEN,{'▶ スタート':'▶ Start','↻ 別の世界':'↻ Another world','● 録画':'● Record','■ 止める':'■ Stop','数え方を選ぶ':'Choose countings','動き・音の素材':'Motion & sound palette','世界・書き出し':'World & export','手で出し入れ':'In / out by hand'}); }catch(e){}
+    try{ Object.assign(window.__igEN,{'▶ スタート':'▶ Start','↻ 別の世界':'↻ New','● 録画':'● Rec','■ 止める':'■ Stop','数え方を選ぶ':'Choose countings','動き・音の素材':'Motion & sound palette','世界・書き出し':'World & export','手で出し入れ':'In / out by hand'}); }catch(e){}
     var vp=document.querySelector('meta[name=viewport]'); if(!vp){ vp=document.createElement('meta'); vp.name='viewport'; document.head.appendChild(vp); } vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
     // 銀河以外（公転・説明・下の画面）は隠すだけ。消さないので計算はそのまま動く
     Array.prototype.forEach.call(document.body.children,function(el){ if(el!==top&&el.tagName!=='SCRIPT') el.style.display='none'; });
@@ -1996,10 +1996,10 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
       '#m-bar{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap;position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;pointer-events:none}#m-bar button{pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.5)}#m-stage{padding-bottom:4px}#instrumentTop{padding-bottom:110px!important}#m-bar button{white-space:nowrap;border-radius:24px;padding:10px 11px;font-size:13px;background:#1b3a40;color:#e5efdf;border:1px solid #2c4a50}'+
       '#m-bar .m-big{font-size:17px;padding:12px 18px;background:#e5efdf;color:#0b161a;font-weight:bold}'+
       '#instrumentTop details{margin:6px 0!important;background:#11252a;border:1px solid #2c4a50;border-radius:10px;padding:6px 10px}#instrumentTop summary{font-weight:bold;cursor:pointer;padding:4px 0}'+
-      '#i-status,#i-change{font-size:12px;color:#9fb4b8;text-align:center;margin:2px 0}';
+      '#i-status,#i-change{font-size:12px;color:#dce5e8;font-weight:600;text-align:center;margin:2px 0}';
     document.head.appendChild(st);
     // 縦長で描く
-    if(/なし/.test($('tate').textContent)) $('tate').click();
+    if($('canvas').width!==1080) $('tate').click();  // 文字（日本語／英語）ではなく、絵の大きさで縦長かを見る
     // 並べ替え：輪 → 大きいボタン → 状態 → たたんだ設定
     var stage=document.createElement('div'); stage.id='m-stage'; top.insertBefore(stage,top.firstChild);
     stage.appendChild($('canvas'));
@@ -2007,7 +2007,7 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
     var big=document.createElement('button'); big.className='m-big'; big.textContent='▶ スタート'; bar.appendChild(big);
     var nw=document.createElement('button'); nw.textContent='↻ 別の世界'; bar.appendChild(nw);
     var rc=document.createElement('button'); rc.textContent='● 録画'; bar.appendChild(rc);
-    var gb=document.createElement('button'); gb.textContent='輪 ⇄ 盤'; bar.appendChild(gb);
+    var gb=document.createElement('button'); gb.textContent='◯ ⇄ ▦'; gb.title='輪 ⇄ 盤'; bar.appendChild(gb);
     var flip=function(){ window.__igGrid=!window.__igGrid; try{ var lx=window.__igRedraw; if(lx) lx(); }catch(e){} };
     gb.onclick=flip;
     stage.appendChild($('status')); stage.appendChild($('change'));
