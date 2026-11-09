@@ -3,6 +3,10 @@
 ▶ **ブラウザで遊ぶ / Play in your browser**
 https://hallucination-freqwave-af.github.io/igrammar-groove/
 
+📱 **スマホ版 / Mobile:** https://hallucination-freqwave-af.github.io/igrammar-groove/m.html（記号の輪。叩くと出し入れ / tap a symbol to bring it in or out）
+
+🥁 **コラボ募集中 / Open Rhythm Collaboration:** [collab/](collab/) — BPM 120、あなたの周期で叩いてください / play in your own cycle at 120 BPM
+
 https://github.com/user-attachments/assets/e6b9137c-d696-4716-937c-bf1f7df453fb
 
 <img width="1185" alt="異文法グルーヴ" src="https://github.com/user-attachments/assets/9f9f759d-a137-4c67-b3db-177409b594e4" />
