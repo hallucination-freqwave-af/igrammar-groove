@@ -1457,7 +1457,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     if(playNotes){ const solo=f.S&&f.S.length===1?f.S[0]:null;
       // 1カウントで新しく鳴らすのは大きい順に12まで（大勢が同時に鳴った瞬間に重くならないように。計算には触らない）
       const hits=[]; for(const k in f.lv){ const v=f.lv[k], lv=Array.isArray(v)?v[0]:v; if(lv>=.25) hits.push([k,lv,Array.isArray(v)?v[1]:0]); }
-      hits.sort((a,b)=>b[1]-a[1]); if(hits.length>12) hits.length=12;
+      hits.sort((a,b)=>b[1]-a[1]); if(/[?&]cap\b/.test(location.search)&&hits.length>12) hits.length=12;  /* 12までの制限は、アドレスに &cap を付けた時だけ */
       for(const [k,lv,semi] of hits){
         voice(g,k,lv*(f.muted?.35:1),semi,t,step,{pan,gain,dull:f.muted,solo:evOn('solo')&&k===solo,n:f.n,co:!!(f.co&&f.co.length>=2&&f.co.includes(k)),big:kuseOn()&&bigCo(f)&&f.co.includes(k),bend:(evOn('col')&&f.shift&&f.shift.k===k)?f.shift.d:0}); } }
     if(evOn('co')&&f.co&&f.co.length>=3){ const vg=g.ctx.createGain(); env(g.ctx,vg,t,.02*Math.min(6,f.co.length)*gain,.01,Math.max(.2,step*1.5)); osc(g.ctx,'sine',1760+f.co.length*40,t,Math.max(.2,step*1.5),vg); vg.connect(g.space); }
