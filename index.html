@@ -103,7 +103,7 @@ function trNode(n){
 // キャンバスに描く文字
 var C2 = CanvasRenderingContext2D.prototype;
 ["fillText", "strokeText", "measureText"].forEach(function(f){
-  var o = C2[f]; (window.__igRaw = window.__igRaw || {})[f] = o;   // 記号の文字（ひ・万など）は訳さずに描くための元の関数 C2[f] = function(s){ var a = Array.prototype.slice.call(arguments); a[0] = T(s); return o.apply(this, a); };
+  var o = C2[f]; (window.__igRaw = window.__igRaw || {})[f] = o;   /* 記号の文字（ひ・万など）は訳さずに描くための元の関数 */ C2[f] = function(s){ var a = Array.prototype.slice.call(arguments); a[0] = T(s); return o.apply(this, a); };
 });
 // ポップアップ
 var _alert = window.alert.bind(window), _confirm = window.confirm.bind(window), _prompt = window.prompt.bind(window);
