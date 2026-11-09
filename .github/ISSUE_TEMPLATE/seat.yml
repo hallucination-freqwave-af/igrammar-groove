@@ -34,6 +34,10 @@ body:
       label: "Symbol / 記号"
       description: "A few strokes, in words or as an SVG path. / 数本の線。言葉か SVG のパスで。"
   - type: input
+    id: fork
+    attributes:
+      label: "Your fork, if you grew your own ring / フォークした輪があれば、そのリンク"
+  - type: input
     id: who
     attributes:
       label: "Who you are / あなたは誰か"
