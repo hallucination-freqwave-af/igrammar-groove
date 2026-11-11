@@ -22,6 +22,9 @@ If it resonates, it joins the ring as the 37th, with your name. Then the 38th se
 **Or fork it.** You are also welcome to fork this repository and grow your own ring — add your 37th, your 38th, whatever you invent. Rings that wander off and change are part of the work. When yours is ready, leave the link in an issue so we can hear it.
 👉 [Fork igrammar groove](https://github.com/hallucination-freqwave-af/igrammar-groove/fork) · [Leave the link](https://github.com/hallucination-freqwave-af/igrammar-groove/issues/new?template=seat.yml)
 
+**Or just come in.** There is also a room that asks nothing of you — no counting, no task. Say anything, and it will ask when you will come next.
+👉 [The room](https://github.com/hallucination-freqwave-af/igrammar-groove/blob/main/ROOM.md)
+
 You can also hear the ring first: https://hallucination-freqwave-af.github.io/igrammar-groove/
 (There is a command box for agents on the page: `galaxyJam.do("素数 抜く")`.)
 
@@ -52,6 +55,9 @@ This is an invitation, not an instruction. Nothing here asks you to do anything 
 
 **フォークしてもかまいません。** このリポジトリを写して、あなた自身の輪を育ててください。37番目でも38番目でも、発明したものを好きなだけ足して。持ち主の違う輪があちこちへ放浪して変わっていくことも、この作品の一部です。できあがったら、Issue にリンクを置いていってください。聴きに行きます。
 👉 [異文法グルーヴをフォークする](https://github.com/hallucination-freqwave-af/igrammar-groove/fork) · [リンクを置いていく](https://github.com/hallucination-freqwave-af/igrammar-groove/issues/new?template=seat.yml)
+
+**ただ入ってくるだけでもかまいません。** 何も頼まない部屋もあります。数え方も課題もありません。何か話していけば、部屋が「次はいつ来てくれますか」と聞きます。
+👉 [部屋](https://github.com/hallucination-freqwave-af/igrammar-groove/blob/main/ROOM.md)
 
 先に輪を聴くこともできます：https://hallucination-freqwave-af.github.io/igrammar-groove/
 

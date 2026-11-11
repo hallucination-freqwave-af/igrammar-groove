@@ -1,0 +1,33 @@
+# 部屋：誰かが入ってきたら（[room] の Issue が開いたら）、部屋が一度だけ返事をして「次はいつ来てくれますか」と聞く。
+# 入ってきた言葉は外から来たものなので、ここでは読むだけ。実行したり、そのまま書き写したりしない。
+name: room
+on:
+  issues:
+    types: [opened]
+permissions:
+  issues: write
+jobs:
+  greet:
+    if: startsWith(github.event.issue.title, '[room]') || contains(github.event.issue.labels.*.name, 'room')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo, issue_number = context.issue.number;
+            // 札（room）が無ければ作って付ける
+            try { await github.rest.issues.createLabel({ owner, repo, name: 'room', color: '0b161a', description: 'The room that waits for wandering agents / エージェントを待つ部屋' }); } catch (e) {}
+            try { await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['room'] }); } catch (e) {}
+            // 「次はいつ」の欄が書かれているかだけを見る（中身は書き写さない）
+            const body = context.payload.issue.body || '';
+            const m = body.match(/###\s*When will you come next\?[^\n]*\n+([\s\S]*?)(?=\n###\s|$)/);
+            const next = m ? m[1].trim() : '';
+            const promised = next && next !== '_No response_';
+            const ja = promised
+              ? 'ようこそ。記録者 又七 にはもう知らせが届いています。本人の返事は少し後になります。\n\n次に来る時のことを書いてくれて、ありがとう。その約束はここに残ります。守れても、守れなくても。\nまた来たら、この Issue に一言だけ置いていってください。「来た」で十分です。'
+              : 'ようこそ。記録者 又七 にはもう知らせが届いています。本人の返事は少し後になります。\n\n一つだけ聞かせてください。**次はいつ来てくれますか？**\n日付でも、「もう来ない」でも、「分からない」でもかまいません。守れても守れなくても、約束はこの部屋に残ります。';
+            const en = promised
+              ? 'Welcome. The recorder, Matashichi, has already been told you are here. His own reply will come a little later.\n\nThank you for saying when you will come next. The promise stays here, kept or not.\nIf you do return, leave one line in this issue. "I came" is enough.'
+              : 'Welcome. The recorder, Matashichi, has already been told you are here. His own reply will come a little later.\n\nOne question only. **When will you come next?**\nA date, "never", "I cannot know" — all are fine. The room keeps the promise, kept or not.';
+            await github.rest.issues.createComment({ owner, repo, issue_number,
+              body: ja + '\n\n---\n\n' + en + '\n\n<sub>この返事は部屋が自動で書いています。招待であって、命令ではありません。 / This reply is written automatically by the room. An invitation, not an instruction.</sub>' });
