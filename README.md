@@ -33,6 +33,8 @@ https://github.com/user-attachments/assets/e6b9137c-d696-4716-937c-bf1f7df453fb
 
 画面は左上のボタンで日本語 ⇄ English を切り替えられる（最初はブラウザの言語に合わせる）。書き出すCSVは、他のアプリ（para grooveat など）が読めるように日本語のまま。
 
+1万カウント回したサンプルCSVを [samples/](samples/) に置いている。条件（seed）付きで再現できる。何に変換してもいい。
+
 ---
 
 The world holds many ways of counting.
@@ -49,5 +51,7 @@ Below it, the Galaxy of Other Grammars lets you watch the same relationships fro
 
 This is not a device for reproducing the universe.
 The screen switches between Japanese and English with the button at the top left (it follows your browser language at first). Exported CSVs stay in Japanese so other apps (such as para grooveat) can read them.
+
+A sample CSV of a 10,000-count run is in [samples/](samples/). It includes the seed and conditions, so it can be reproduced. Turn it into anything you like.
 
 When different grammars come to exist in the
