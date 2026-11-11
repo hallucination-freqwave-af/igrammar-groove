@@ -1501,11 +1501,13 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         queue.push({t:when,i:index}); index++; when+=step;
       }
       if(index>=N){ clearInterval(handle); handle=null; }
+      if(document.hidden) paintDue(); // タブが裏にある間は画面の合図（tick）が来ないので、ここから描く（録画の絵が止まらないように）
     },25);
     requestAnimationFrame(tick);
   };
   $i('stop').onclick=()=>{ halt(); index=0; manual=[]; if(ac){ ac.close(); ac=null; graph=null; } $i('from').value=1; $i('status').textContent='先頭へ戻りました'; drawFrame(1); };
-  function tick(){ if(!ac) return; const now=ac.currentTime; let cur=null; while(queue.length&&queue[0].t<=now){ cur=queue.shift(); } if(cur){ drawFrame(cur.i+1); } if(handle||queue.length) requestAnimationFrame(tick); }
+  function paintDue(){ if(!ac) return; const now=ac.currentTime; let cur=null; while(queue.length&&queue[0].t<=now){ cur=queue.shift(); } if(cur){ drawFrame(cur.i+1); } }
+  function tick(){ if(!ac) return; paintDue(); if(handle||queue.length) requestAnimationFrame(tick); }
 
   // ---- 映像（同じ frames を読むだけ） ----
   const cv=$i('canvas'), cx=cv.getContext('2d'); let lastDrawn=1;
