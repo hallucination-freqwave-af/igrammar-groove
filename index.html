@@ -1203,7 +1203,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
   let thirdOnly=false, zk=1;
   function th3Of(sp){ if(!sp.th3){ const segs={}; sp.th3=[]; sp.frames.forEach(fr=>(fr.tick||[]).forEach(t=>{ const s=segs[t.pk]; if(s&&s.g===t.g&&fr.n-s.e<=t.g*2){ s.e=fr.n; } else { const ns={pk:t.pk,g:t.g,s:fr.n-t.g,e:fr.n,anchor:fr.n}; segs[t.pk]=ns; sp.th3.push(ns); } })); } return sp.th3; }
   function liveAt(sp,n){ return th3Of(sp).filter(t=>n>=t.s&&n<=t.e+t.g); }
-  function halt(){ clearInterval(handle); handle=null; if(ac) ac.suspend(); }
+  function halt(){ clearInterval(handle); handle=null; document.documentElement.classList.remove('ig-play'); if(ac) ac.suspend(); }
   function readOpt(){
     const o={};
     const amp=+$i('amp').value; if(amp) o.amp=amp;
@@ -1490,6 +1490,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
     await ac.resume(); const N=worlds[0].frames.length;
     if(index>=N||index===0) index=Math.max(0,Math.min(N-1,(+$i('from').value||1)-1));
     when=ac.currentTime+.06; queue=[];
+    document.documentElement.classList.add('ig-play'); /* 再生中の目印（スマホ版で数字を隠す） */
     handle=setInterval(()=>{
       const pace=Math.max(30,Math.min(3600,+$i('rate').value||600)), step=60/pace;
       if(ac.state!=='running'){ ac.resume().catch(()=>{}); return; } // 音が止められていたら起こし直す
@@ -1500,7 +1501,7 @@ const ptrs=new Map();let pinch0=0;canvas.onpointerdown=e=>{ptrs.set(e.pointerId,
         layers(graph,when,fs);
         queue.push({t:when,i:index}); index++; when+=step;
       }
-      if(index>=N){ clearInterval(handle); handle=null; }
+      if(index>=N){ clearInterval(handle); handle=null; document.documentElement.classList.remove('ig-play'); }
       if(document.hidden) paintDue(); // タブが裏にある間は画面の合図（tick）が来ないので、ここから描く（録画の絵が止まらないように）
     },25);
     requestAnimationFrame(tick);
@@ -2014,7 +2015,7 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
       '#m-bar{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap;position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;pointer-events:none}#m-bar button{pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.5)}#m-stage{box-sizing:border-box;min-height:100svh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}#instrumentTop{padding-bottom:110px!important}#m-bar button{white-space:nowrap;border-radius:24px;padding:10px 11px;font-size:13px;background:#1b3a40;color:#e5efdf;border:1px solid #2c4a50}'+
       '#m-bar .m-big{font-size:17px;padding:12px 18px;background:#e5efdf;color:#0b161a;font-weight:bold}'+
       '#instrumentTop details{margin:6px 0!important;background:#11252a;border:1px solid #2c4a50;border-radius:10px;padding:6px 10px}#instrumentTop summary{font-weight:bold;cursor:pointer;padding:4px 0}'+
-      '#i-status,#i-change{font-size:12px;color:#dce5e8;font-weight:600;text-align:center;margin:2px 0}';
+      '#i-status,#i-change{font-size:12px;color:#dce5e8;font-weight:600;text-align:center;margin:2px 0}.ig-play #i-status{visibility:hidden}';
     document.head.appendChild(st);
     // 縦長で描く
     if($('canvas').width!==1080) $('tate').click();  // 文字（日本語／英語）ではなく、絵の大きさで縦長かを見る
