@@ -2017,10 +2017,10 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
     var st=document.createElement('style');
     st.textContent='body{margin:0;background:#0b161a}#instrumentTop{padding:0 0 40px!important;font-size:14px}#instrumentTop>h2,#instrumentTop>p:first-of-type{display:none}'+
       '#m-stage{position:relative}#i-canvas{display:block;width:100%!important;max-width:100%!important;height:auto!important;margin:0 auto!important;border:0!important}'+
-      '#m-bar{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap;position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;pointer-events:none}#m-bar button{pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.5)}#m-stage{box-sizing:border-box;min-height:100svh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}#instrumentTop{padding-bottom:110px!important}#m-bar button{white-space:nowrap;border-radius:24px;padding:10px 11px;font-size:13px;background:#1b3a40;color:#e5efdf;border:1px solid #2c4a50}'+
+      '#m-bar{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap;position:fixed;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;pointer-events:none}#m-bar button{pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.5)}#m-stage{box-sizing:border-box;padding-bottom:10px}body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}#instrumentTop{padding-bottom:0!important}#m-bar button{white-space:nowrap;border-radius:24px;padding:10px 11px;font-size:13px;background:#1b3a40;color:#e5efdf;border:1px solid #2c4a50}'+
       '#m-bar .m-big{font-size:17px;padding:12px 14px;background:#e5efdf;color:#0b161a;font-weight:bold}#m-bar select{pointer-events:auto;box-shadow:0 2px 12px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;font:inherit;font-size:14px;color:#e5efdf;background:#17343a;border:1px solid #2c4a50;border-radius:999px;padding:10px 12px}#m-flip{position:absolute;top:6px;right:8px;z-index:5}'+
       '#instrumentTop details{margin:6px 0!important;background:#11252a;border:1px solid #2c4a50;border-radius:10px;padding:6px 10px}#instrumentTop summary{font-weight:bold;cursor:pointer;padding:4px 0}'+
-      '#i-status,#i-change{font-size:12px;color:#dce5e8;font-weight:600;text-align:center;margin:2px 0}.ig-play #i-status{visibility:hidden}';
+      '#i-status,#i-change{font-size:12px;color:#dce5e8;font-weight:600;text-align:center;margin:2px 0}.ig-play #i-status{display:none}';
     document.head.appendChild(st);
     // 縦長で描く
     if($('canvas').width!==1080) $('tate').click();  // 文字（日本語／英語）ではなく、絵の大きさで縦長かを見る
@@ -2062,7 +2062,7 @@ function txt(c,s,size,font,dx){c.save();c.font=(font==='serif'?'italic 600 ':'60
     Array.prototype.slice.call(top.querySelectorAll(':scope > details')).forEach(function(d){ d.open=false; wrap.appendChild(d); });
     // 元の並びに残ったすき間（説明文や空の行）は隠す
     Array.prototype.slice.call(top.children).forEach(function(n){ if(n!==stage&&n!==wrap) n.style.display='none'; });
-    var lg=document.getElementById('ig-lang'); if(lg){ lg.style.cssText='display:block;text-align:center;margin:10px 0'; wrap.appendChild(lg); }
+    var lg=document.getElementById('ig-lang'); if(lg){ lg.style.cssText='display:block;margin:6px auto 0;padding:6px 16px;border-radius:999px;font-size:13px'; stage.appendChild(lg); }  /* 言語の切り替えは数字の下（下のボタン列の上の空き）に置く */
     // 開いた瞬間に輪が出るように：全員ランダムで先に計算だけしておく（音はスタートを押してから）
     $('allR').click(); $('build').click();
     // 叩いた所に一番近い記号を探して、その場で出し入れ
