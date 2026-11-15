@@ -27,6 +27,7 @@ canvas{display:block;margin:auto}
  <button id="pp">▶</button><button data-s="1">1×</button><button data-s="4" class="on">4×</button><button data-s="16">16×</button>
  <input id="seek" type="range" min="0" max="10000" value="0"><button id="end">全体</button>
  <select id="world" hidden></select>
+ <select id="ride" title="一つの数え方の伸びる先に乗る"><option value="-1">外から見る</option></select>
  <label>CSVを開く<input id="file" type="file" accept=".csv,text/csv" hidden></label>
  <button id="rec" title="先頭から最後まで、1カウント1コマ・30fps・1920×1080で録る">録画（1920×1080）</button>
 </div>
@@ -68,13 +69,13 @@ function build(rows,worldName){
   const lanes=codes.map((c,i)=>{const y=1-(i+.5)/N*2,r=Math.sqrt(1-y*y),th=ga*i,dir=new V(Math.cos(th)*r,y,Math.sin(th)*r);
     const side=new V().crossVectors(dir,Math.abs(dir.y)<.9?new V(0,1,0):new V(1,0,0)).normalize(),k=kOf(cycle(c,P)),step=3.2/Math.max(1,ringN[i]),p0=dir.clone().multiplyScalar(.25);
     return {c,i,k,dir,side,step,bend:0,refuse:false,queue:[{p:p0,d:dir.clone(),l:k===1?step:.55,depth:0}],qi:0,tip:p0}});
-  const segP=[],segL=[],segK=[],segB=[],reds=[],evAt={},rot=[0],q=new THREE.Quaternion();
+  const segP=[],segL=[],segK=[],segB=[],reds=[],evAt={},rot=[0],q=new THREE.Quaternion(),tips=codes.map(()=>[]);
   const addEv=(k,s)=>(evAt[k]=evAt[k]||[]).push(s);
   function grow(Ln,k){const node=Ln.queue[Ln.qi];if(!node)return;Ln.qi++;
     const d=node.d.clone();q.setFromAxisAngle(Ln.side,Ln.bend*.15);d.applyQuaternion(q);
     const end=node.p.clone().add(d.clone().multiplyScalar(node.l)),broken=Ln.refuse;Ln.refuse=false;
     const e2=broken?node.p.clone().add(d.clone().multiplyScalar(node.l*.25)):end;
-    segP.push(node.p.x,node.p.y,node.p.z,e2.x,e2.y,e2.z);segL.push(Ln.i);segK.push(k);segB.push(broken?1:0);Ln.tip=end;
+    segP.push(node.p.x,node.p.y,node.p.z,e2.x,e2.y,e2.z);segL.push(Ln.i);segK.push(k);segB.push(broken?1:0);Ln.tip=end;tips[Ln.i].push([k,end.x,end.y,end.z,d.x,d.y,d.z,node.l]);
     if(Ln.k===1){const ax=new V().crossVectors(d,Ln.side).normalize(),a=Ln.step/.3;const nd=d.clone().applyAxisAngle(ax,a).applyAxisAngle(Ln.dir,a*.6).normalize();nd.lerp(Ln.dir,.03).normalize();Ln.queue.push({p:end,d:nd,l:Ln.step,depth:node.depth+1})}
     else{const spread=.55+.25/Ln.k,perp=new V().crossVectors(d,Ln.side);if(perp.lengthSq()<1e-6)perp.set(0,1,0);perp.normalize();
       for(let j=0;j<Ln.k;j++){const ax=perp.clone().applyAxisAngle(d,j/Ln.k*Math.PI*2+node.depth*.9+Ln.i);Ln.queue.push({p:end,d:d.clone().applyAxisAngle(ax,spread).normalize(),l:node.l*.82,depth:node.depth+1})}}}
@@ -96,16 +97,16 @@ function build(rows,worldName){
   const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.Float32BufferAttribute(rp,3));
   const rc=new Float32Array(rp.length);rg.setAttribute('color',new THREE.BufferAttribute(rc,3));
   root.add(new THREE.LineSegments(rg,new THREE.LineBasicMaterial({vertexColors:true})));
-  return {frames,TOTAL,codes,segL,segK,segB,g,col,rg,rc,rk,redPk:reds.map(r=>r[1]),SEG,evAt,rot,label:worldName+(cond.world?' ／ 世界'+cond.world:'')+(cond.seed?' ／ 種 '+cond.seed:'')};
+  return {frames,TOTAL,codes,tips,ringN,kinds:lanes.map(l=>l.k),segL,segK,segB,g,col,rg,rc,rk,redPk:reds.map(r=>r[1]),SEG,evAt,rot,label:worldName+(cond.world?' ／ 世界'+cond.world:'')+(cond.seed?' ／ 種 '+cond.seed:'')};
 }
 
 // ---- 再生 ----
-let cur=0,play=false,speed=4,el=.35,dist=13,drag=null,yawOff=0,evLog=[],recState=null;
+let ride=-1,cur=0,play=false,speed=4,el=.35,dist=13,drag=null,yawOff=0,evLog=[],recState=null;
 const $=id=>document.getElementById(id);
 function lower(arr,k){let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(arr[m]<=k)lo=m+1;else hi=m}return lo}
 function paint(){if(!T)return;const k=Math.round(cur),f=T.frames[k-1];
   const n=lower(T.segK,k);T.g.setDrawRange(0,n*2);const col=T.col;
-  for(let s=0;s<n;s++){const age=k-T.segK[s];let m=(f&&f.a.has(T.segL[s]))?.13:.62;if(age<40)m+=(1-age/40)*.38;if(T.segB[s])m*=.6;
+  for(let s=0;s<n;s++){const age=k-T.segK[s];let m=(f&&f.a.has(T.segL[s]))?.13:.62;if(age<40)m+=(1-age/40)*.38;if(T.segB[s])m*=.6;if(T.segL[s]===ride)m=Math.max(m,f&&f.a.has(ride)?.4:.85);
     const o=s*6;for(let c=0;c<3;c++){const v=BG[c]+(INK[c]-BG[c])*m;col[o+c]=v;col[o+3+c]=v}}
   T.g.attributes.color.needsUpdate=true;
   const rn=lower(T.rk,k);T.rg.setDrawRange(0,rn*T.SEG*2);const lit=new Set();
@@ -113,7 +114,14 @@ function paint(){if(!T)return;const k=Math.round(cur),f=T.frames[k-1];
   for(let r=0;r<rn;r++){const m=(lit.has(T.redPk[r])||k-T.rk[r]<20)?1:.55;for(let v=0;v<T.SEG*2;v++){const o=(r*T.SEG*2+v)*3;for(let c=0;c<3;c++)T.rc[o+c]=BG[c]+(RED[c]-BG[c])*m}}
   T.rg.attributes.color.needsUpdate=true;
   $('cnt').textContent=k.toLocaleString();$('seek').value=k;$('frz').textContent=f&&f.f?'凍結中':'';$('ten').style.width=(f?Math.min(24,f.t)/24*160:0)+'px';}
-function camAt(){const k=Math.floor(cur),fr=cur-k,r=T?((T.rot[k]||0)*(1-fr)+(T.rot[Math.min(T.TOTAL,k+1)]||T.rot[k]||0)*fr):0,yaw=r+yawOff;
+const RS={p:null,l:null,d:null,k:-1};
+function tipAt(l,k){const a=T.tips[l];let lo=0,hi=a.length;while(lo<hi){const m=(lo+hi)>>1;if(a[m][0]<=k)lo=m+1;else hi=m}return a[Math.max(0,lo-1)]||[0,T.frames.length?0:0,0,0,0,1,0,.3]}
+function rideCam(){const k=Math.max(1,Math.round(cur)),t=tipAt(ride,k),tip=new V(t[1],t[2],t[3]),d=new V(t[4],t[5],t[6]).normalize(),back=Math.max(.12,Math.min(.7,t[7]*6));
+  const up=Math.abs(d.y)<.95?new V(0,1,0):new V(1,0,0),side=new V().crossVectors(d,up).normalize().applyAxisAngle(d,yawOff);
+  const want=tip.clone().addScaledVector(d,-back).addScaledVector(side,back*.35).addScaledVector(up,back*.2),look=tip.clone().addScaledVector(d,back*.6);
+  const snap=!RS.p||Math.abs(k-RS.k)>60,s=snap?1:(recState?.08:.08);RS.k=k;
+  if(snap){RS.p=want;RS.l=look}else{RS.p.lerp(want,s);RS.l.lerp(look,s)}cam.position.copy(RS.p);cam.lookAt(RS.l)}
+function camAt(){if(T&&ride>=0){rideCam();return}const k=Math.floor(cur),fr=cur-k,r=T?((T.rot[k]||0)*(1-fr)+(T.rot[Math.min(T.TOTAL,k+1)]||T.rot[k]||0)*fr):0,yaw=r+yawOff;
   cam.position.set(Math.cos(yaw)*Math.cos(el)*dist,Math.sin(el)*dist,Math.sin(yaw)*Math.cos(el)*dist);cam.lookAt(0,0,0)}
 function logTo(k0,k){if(!T)return;if(k<k0){evLog=[];return}for(let j=k0+1;j<=k;j++)if(T.evAt[j])evLog=evLog.concat(T.evAt[j].map(s=>j+'　'+s));evLog=evLog.slice(-6);$('ev').innerHTML=evLog.join('<br>')}
 let last=performance.now();
@@ -136,7 +144,7 @@ function recStart(){if(!T||recState)return;
 function recFrame(){const R=recState,now=performance.now();if(now<R.next)return;R.next=Math.max(R.next+1000/30,now-50);
   const k0=R.k;R.k++;cur=R.k;logTo(k0,R.k);camAt();paint();ren.render(scene,cam);
   const o=R.ox;o.drawImage(ren.domElement,0,0,1920,1080);o.fillStyle='#222';o.font='300 52px "Hiragino Mincho ProN",serif';o.fillText(R.k.toLocaleString(),48,96);
-  o.font='22px "Hiragino Mincho ProN",serif';o.fillText(T.label,48,140);const f=T.frames[R.k-1];if(f&&f.f){o.fillStyle='#3a5a7a';o.fillText('凍結中',48,176)}
+  o.font='22px "Hiragino Mincho ProN",serif';o.fillText(T.label+(ride>=0?' ／ 乗る：'+short(NAMES[T.codes[ride]]):''),48,140);const f=T.frames[R.k-1];if(f&&f.f){o.fillStyle='#3a5a7a';o.fillText('凍結中',48,176)}
   evLog.forEach((s,i)=>{const red=s.includes('class=r');o.fillStyle=red?'#b3122a':'rgba(34,34,34,.8)';o.fillText(s.replace(/<[^>]+>/g,''),48,1080-60-(evLog.length-1-i)*34)});
   R.track.requestFrame();$('msg').textContent='録画中 '+R.k+' / '+T.TOTAL;
   if(R.k>=T.TOTAL){R.mr.stop()}}
@@ -146,20 +154,22 @@ let rowsNow=null;
 function load(text,src){try{const rows=parseCSV(text.replace(/^﻿/,''));const ws=[...new Set(rows.slice(1).map(r=>r[0]).filter(w=>w&&w!=='条件'))];
   if(!ws.length)throw new Error('記録の行がない');rowsNow=rows;const sel=$('world');sel.innerHTML=ws.map(w=>'<option>'+w+'</option>').join('');sel.hidden=ws.length<2;
   use(ws[0]);$('msg').innerHTML=src+'<br><a href="./">← 異文法グルーヴ</a>'}catch(e){$('msg').textContent='読めなかった：'+e.message}}
-function use(w){T=build(rowsNow,w);$('seek').max=T.TOTAL;$('ttl').textContent='異文法の樹 ／ '+T.label;cur=T.TOTAL;evLog=[];setPlay(false)}
+function use(w){T=build(rowsNow,w);{const o=T.codes.map((c,i)=>[i,T.ringN[i]]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);$('ride').innerHTML='<option value="-1">外から見る</option>'+o.map(([i,n])=>'<option value="'+i+'">乗る：'+short(NAMES[T.codes[i]])+'（'+(T.kinds[i]===1?'らせん':T.kinds[i]+'つに分かれる')+'・'+n+'節）</option>').join('');setRide(-1)}$('seek').max=T.TOTAL;$('ttl').textContent='異文法の樹 ／ '+T.label;cur=T.TOTAL;evLog=[];setPlay(false)}
 $('world').onchange=()=>use($('world').value);
+function setRide(v){ride=v;RS.p=null;scene.fog=v>=0?new THREE.Fog(0xf2f0ea,.3,5):null;cam.fov=v>=0?70:40;cam.near=v>=0?.005:.1;cam.updateProjectionMatrix();yawOff=0}
+$('ride').onchange=()=>setRide(+$('ride').value);
 $('file').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>load(t,f.name))};
 addEventListener('dragover',e=>{e.preventDefault();$('drop').style.display='flex'});
 addEventListener('dragleave',e=>{if(e.target===$('drop'))$('drop').style.display='none'});
 addEventListener('drop',e=>{e.preventDefault();$('drop').style.display='none';const f=e.dataTransfer.files[0];if(f)f.text().then(t=>load(t,f.name))});
-$('pp').onclick=()=>{if(!T)return;if(cur>=T.TOTAL){cur=0;evLog=[]}setPlay(!play)};
+$('pp').onclick=()=>{if(!T)return;if(cur>=T.TOTAL){cur=0;evLog=[];RS.p=null}setPlay(!play)};
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b))});
 $('seek').oninput=()=>{cur=+$('seek').value;evLog=[]};
 $('end').onclick=()=>{if(!T)return;cur=T.TOTAL;evLog=[];setPlay(false)};
 $('rec').onclick=()=>{if(recState){recState.mr.stop();return}recStart()};
 ren.domElement.onpointerdown=e=>drag={x:e.clientX,y:e.clientY,r:yawOff,e:el};
 addEventListener('pointerup',()=>drag=null);
-addEventListener('pointermove',e=>{if(!drag)return;yawOff=drag.r+(e.clientX-drag.x)*.006;el=Math.max(-1.4,Math.min(1.4,drag.e+(e.clientY-drag.y)*.006))});
+addEventListener('pointermove',e=>{if(!drag)return;yawOff=drag.r+(e.clientX-drag.x)*.006;if(ride>=0)return;el=Math.max(-1.4,Math.min(1.4,drag.e+(e.clientY-drag.y)*.006))});
 addEventListener('wheel',e=>{dist=Math.max(3,Math.min(40,dist*(1+e.deltaY*.001)))});
 addEventListener('resize',fit);fit();
 fetch('samples/galaxy-D-seed2638928241.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>load(t,'サンプル（世界D・種 2638928241）。自分のCSVを落とすと入れ替わる。')).catch(()=>{});
