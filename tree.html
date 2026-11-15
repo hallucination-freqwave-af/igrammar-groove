@@ -32,6 +32,9 @@ canvas{display:block;margin:auto}
  <button id="rec" title="先頭から最後まで、1カウント1コマ・30fps・1920×1080で録る">録画（1920×1080）</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegmentsGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineMaterial.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/lines/LineSegments2.js"></script>
 <script>
 // 異文法の樹：強く鳴った数え方の枝が一節ずつ伸び、最後のカウントで一本の樹ができあがる。
 // 枝分かれは各数え方の一周から（素数・非周期は分かれずにねじれて伸びる。素因数の種類が多いほど分かれる）。
@@ -48,10 +51,16 @@ function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.lengt
 const V=THREE.Vector3;
 const ren=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});ren.setPixelRatio(devicePixelRatio);ren.setClearColor(0xf2f0ea);document.body.prepend(ren.domElement);
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.1,200),root=new THREE.Group();scene.add(root);
-function fit(){if(recState)return;ren.setPixelRatio(devicePixelRatio);ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+function fit(){if(recState)return;ren.setPixelRatio(devicePixelRatio);ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();setRes()}
 let T=null; // 今の樹
 const BG=[.949,.941,.918],INK=[.08,.08,.08],RED=[.70,.07,.16];
 
+const mats=[];
+function fat(pos,w,idx,K){const geo=new THREE.LineSegmentsGeometry();geo.setPositions(pos);geo.setColors(new Float32Array(pos.length).fill(.95));
+  const mat=new THREE.LineMaterial({vertexColors:true,linewidth:w,fog:true});mats.push(mat);setRes();
+  const o=new THREE.LineSegments2(geo,mat);o.frustumCulled=false;root.add(o);geo.instanceCount=0;
+  return {geo,idx,K,arr:geo.attributes.instanceColorStart.data}}
+function setRes(){const s=new THREE.Vector2();ren.getSize(s);mats.forEach(m=>m.resolution.set(s.x,s.y))}
 function build(rows,worldName){
   const head=rows[0],ci=n=>head.indexOf(n);
   const C={world:ci('世界'),n:ci('カウント'),strong:ci('強く鳴った'),ten:ci('緊張'),shk:ci('衝突でずれた'),shd:ci('ずれ'),ref:ci('拒否した'),frz:ci('凍結中'),born:ci('第3の拍 誕生'),tick:ci('第3の拍 鳴った'),away:ci('居ない')};
@@ -60,6 +69,7 @@ function build(rows,worldName){
   const P=cond.parameters||{};
   const codes=(cond.lanes||Object.keys(NAMES)).filter(k=>k!=='cl'&&NAMES[k]);
   const li={};codes.forEach((k,i)=>li[k]=i);const N=codes.length;
+  const allL=cond.lanes||codes,LC=codes.map(c=>{let h=(145+Math.max(0,allL.indexOf(c))*29)%360;if(h<25||h>335)h=(h+40)%360;const c3=new THREE.Color().setHSL(h/360,.55,.36);return [c3.r,c3.g,c3.b]});
   const R=rows.filter(r=>r[0]===worldName&&r[C.n]&&!isNaN(+r[C.n]));
   const L=s=>(s||'').split('／').map(x=>BYNAME[x]).filter(k=>k!=null&&li[k]!=null).map(k=>li[k]);
   const frames=R.map(r=>({s:L(r[C.strong]),a:new Set(L(r[C.away])),t:+r[C.ten]||0,f:r[C.frz]==='1',sh:r[C.shk]?L(r[C.shk]):[],sd:(r[C.shd]||'').split('／').map(Number),rf:L(r[C.ref]),b:(r[C.born]||'').split(/\s+/).filter(Boolean).map(x=>x.split(':')[0].split('|')),tk:(r[C.tick]||'').split(/\s+/).filter(Boolean).map(x=>x.split(':')[0])}));
@@ -69,13 +79,13 @@ function build(rows,worldName){
   const lanes=codes.map((c,i)=>{const y=1-(i+.5)/N*2,r=Math.sqrt(1-y*y),th=ga*i,dir=new V(Math.cos(th)*r,y,Math.sin(th)*r);
     const side=new V().crossVectors(dir,Math.abs(dir.y)<.9?new V(0,1,0):new V(1,0,0)).normalize(),k=kOf(cycle(c,P)),step=3.2/Math.max(1,ringN[i]),p0=dir.clone().multiplyScalar(.25);
     return {c,i,k,dir,side,step,bend:0,refuse:false,queue:[{p:p0,d:dir.clone(),l:k===1?step:.55,depth:0}],qi:0,tip:p0}});
-  const segP=[],segL=[],segK=[],segB=[],reds=[],evAt={},rot=[0],q=new THREE.Quaternion(),tips=codes.map(()=>[]);
+  const segP=[],segL=[],segK=[],segB=[],segD=[],reds=[],evAt={},rot=[0],q=new THREE.Quaternion(),tips=codes.map(()=>[]);
   const addEv=(k,s)=>(evAt[k]=evAt[k]||[]).push(s);
   function grow(Ln,k){const node=Ln.queue[Ln.qi];if(!node)return;Ln.qi++;
     const d=node.d.clone();q.setFromAxisAngle(Ln.side,Ln.bend*.15);d.applyQuaternion(q);
     const end=node.p.clone().add(d.clone().multiplyScalar(node.l)),broken=Ln.refuse;Ln.refuse=false;
     const e2=broken?node.p.clone().add(d.clone().multiplyScalar(node.l*.25)):end;
-    segP.push(node.p.x,node.p.y,node.p.z,e2.x,e2.y,e2.z);segL.push(Ln.i);segK.push(k);segB.push(broken?1:0);Ln.tip=end;tips[Ln.i].push([k,end.x,end.y,end.z,d.x,d.y,d.z,node.l]);
+    segP.push(node.p.x,node.p.y,node.p.z,e2.x,e2.y,e2.z);segL.push(Ln.i);segK.push(k);segB.push(broken?1:0);segD.push(Math.min(3,node.depth));Ln.tip=end;tips[Ln.i].push([k,end.x,end.y,end.z,d.x,d.y,d.z,node.l]);
     if(Ln.k===1){const ax=new V().crossVectors(d,Ln.side).normalize(),a=Ln.step/.3;const nd=d.clone().applyAxisAngle(ax,a).applyAxisAngle(Ln.dir,a*.6).normalize();nd.lerp(Ln.dir,.03).normalize();Ln.queue.push({p:end,d:nd,l:Ln.step,depth:node.depth+1})}
     else{const spread=.55+.25/Ln.k,perp=new V().crossVectors(d,Ln.side);if(perp.lengthSq()<1e-6)perp.set(0,1,0);perp.normalize();
       for(let j=0;j<Ln.k;j++){const ax=perp.clone().applyAxisAngle(d,j/Ln.k*Math.PI*2+node.depth*.9+Ln.i);Ln.queue.push({p:end,d:d.clone().applyAxisAngle(ax,spread).normalize(),l:node.l*.82,depth:node.depth+1})}}}
@@ -88,16 +98,16 @@ function build(rows,worldName){
     if(!f.f)a+=.0012+Math.min(24,f.t)*.0004;rot[k]=a});
   // 幾何
   while(root.children.length){const o=root.children.pop();o.geometry.dispose();o.material.dispose()}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(segP,3));
-  const col=new Float32Array(segP.length);g.setAttribute('color',new THREE.BufferAttribute(col,3));
-  root.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true})));
+  // 太さ：根元の幹ほど太く、枝先ほど細い（深さ0〜3以上の4段）
+  const col=new Float32Array(segP.length),groups=[];mats.length=0;
+  [3.4,2.3,1.5,1].forEach((w,b)=>{const idx=[];segD.forEach((d,s)=>{if(d===b)idx.push(s)});if(!idx.length)return;
+    const pos=new Float32Array(idx.length*6);idx.forEach((s,i)=>{for(let c=0;c<6;c++)pos[i*6+c]=segP[s*6+c]});
+    groups.push(fat(pos,w,idx,idx.map(s=>segK[s])))});
   const rp=[],rk=[],SEG=16;
   for(const [k,pk,A,B] of reds){const M=A.clone().add(B).multiplyScalar(.275);let prev=A;
     for(let s=1;s<=SEG;s++){const t=s/SEG,u=1-t,P3=new V(u*u*A.x+2*u*t*M.x+t*t*B.x,u*u*A.y+2*u*t*M.y+t*t*B.y,u*u*A.z+2*u*t*M.z+t*t*B.z);rp.push(prev.x,prev.y,prev.z,P3.x,P3.y,P3.z);prev=P3}rk.push(k)}
-  const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.Float32BufferAttribute(rp,3));
-  const rc=new Float32Array(rp.length);rg.setAttribute('color',new THREE.BufferAttribute(rc,3));
-  root.add(new THREE.LineSegments(rg,new THREE.LineBasicMaterial({vertexColors:true})));
-  return {frames,TOTAL,codes,tips,ringN,kinds:lanes.map(l=>l.k),segL,segK,segB,g,col,rg,rc,rk,redPk:reds.map(r=>r[1]),SEG,evAt,rot,label:worldName+(cond.world?' ／ 世界'+cond.world:'')+(cond.seed?' ／ 種 '+cond.seed:'')};
+  const rc=new Float32Array(rp.length),rgp=rp.length?fat(new Float32Array(rp),1.8,null,null):null;
+  return {frames,TOTAL,codes,LC,tips,ringN,kinds:lanes.map(l=>l.k),segL,segK,segB,groups,col,rgp,rc,rk,redPk:reds.map(r=>r[1]),SEG,evAt,rot,label:worldName+(cond.world?' ／ 世界'+cond.world:'')+(cond.seed?' ／ 種 '+cond.seed:'')};
 }
 
 // ---- 再生 ----
@@ -105,14 +115,14 @@ let ride=-1,cur=0,play=false,speed=4,el=.35,dist=13,drag=null,yawOff=0,evLog=[],
 const $=id=>document.getElementById(id);
 function lower(arr,k){let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(arr[m]<=k)lo=m+1;else hi=m}return lo}
 function paint(){if(!T)return;const k=Math.round(cur),f=T.frames[k-1];
-  const n=lower(T.segK,k);T.g.setDrawRange(0,n*2);const col=T.col;
+  const n=lower(T.segK,k);const col=T.col;
   for(let s=0;s<n;s++){const age=k-T.segK[s];let m=(f&&f.a.has(T.segL[s]))?.13:.62;if(age<40)m+=(1-age/40)*.38;if(T.segB[s])m*=.6;if(T.segL[s]===ride)m=Math.max(m,f&&f.a.has(ride)?.4:.85);
-    const o=s*6;for(let c=0;c<3;c++){const v=BG[c]+(INK[c]-BG[c])*m;col[o+c]=v;col[o+3+c]=v}}
-  T.g.attributes.color.needsUpdate=true;
-  const rn=lower(T.rk,k);T.rg.setDrawRange(0,rn*T.SEG*2);const lit=new Set();
+    const o=s*6,lc=T.LC[T.segL[s]];for(let c=0;c<3;c++){const v=BG[c]+(lc[c]-BG[c])*Math.min(1,m*1.15);col[o+c]=v;col[o+3+c]=v}}
+  for(const G of T.groups){const m=lower(G.K,k),a=G.arr.array;G.geo.instanceCount=m;for(let i=0;i<m;i++){const s=G.idx[i]*6,o=i*6;for(let c=0;c<6;c++)a[o+c]=col[s+c]}G.arr.needsUpdate=true}
+  const rn=lower(T.rk,k);if(T.rgp)T.rgp.geo.instanceCount=rn*T.SEG;const lit=new Set();
   for(let j=Math.max(1,k-12);j<=k;j++){const fr=T.frames[j-1];if(fr)fr.tk.forEach(x=>lit.add(x))}
   for(let r=0;r<rn;r++){const m=(lit.has(T.redPk[r])||k-T.rk[r]<20)?1:.55;for(let v=0;v<T.SEG*2;v++){const o=(r*T.SEG*2+v)*3;for(let c=0;c<3;c++)T.rc[o+c]=BG[c]+(RED[c]-BG[c])*m}}
-  T.rg.attributes.color.needsUpdate=true;
+  if(T.rgp){T.rgp.arr.array.set(T.rc.subarray(0,rn*T.SEG*6));T.rgp.arr.needsUpdate=true}
   $('cnt').textContent=k.toLocaleString();$('seek').value=k;$('frz').textContent=f&&f.f?'凍結中':'';$('ten').style.width=(f?Math.min(24,f.t)/24*160:0)+'px';}
 const RS={p:null,l:null,d:null,k:-1};
 function tipAt(l,k){const a=T.tips[l];let lo=0,hi=a.length;while(lo<hi){const m=(lo+hi)>>1;if(a[m][0]<=k)lo=m+1;else hi=m}return a[Math.max(0,lo-1)]||[0,T.frames.length?0:0,0,0,0,1,0,.3]}
@@ -135,7 +145,7 @@ function setPlay(v){play=v;$('pp').textContent=v?'❚❚':'▶'}
 function recStart(){if(!T||recState)return;
   if(!window.MediaRecorder){$('msg').textContent='このブラウザは録画に対応していません';return}
   const out=document.createElement('canvas');out.width=1920;out.height=1080;const ox=out.getContext('2d');
-  ren.setPixelRatio(1);ren.setSize(1920,1080,false);ren.domElement.style.width='100vw';ren.domElement.style.height=(100*1080/1920)+'vw';cam.aspect=1920/1080;cam.updateProjectionMatrix();
+  ren.setPixelRatio(1);ren.setSize(1920,1080,false);ren.domElement.style.width='100vw';ren.domElement.style.height=(100*1080/1920)+'vw';cam.aspect=1920/1080;cam.updateProjectionMatrix();setRes();
   const type=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(x=>MediaRecorder.isTypeSupported(x))||'';
   const stream=out.captureStream(0),track=stream.getVideoTracks()[0],chunks=[];
   const mr=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:16e6});mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
