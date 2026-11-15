@@ -5,6 +5,8 @@ https://hallucination-freqwave-af.github.io/igrammar-groove/
 
 📱 **スマホ版 / Mobile:** https://hallucination-freqwave-af.github.io/igrammar-groove/m.html（記号の輪。叩くと出し入れ / tap a symbol to bring it in or out）
 
+🌳 **異文法の樹 / iGrammar Tree:** https://hallucination-freqwave-af.github.io/igrammar-groove/tree.html（書き出したCSVを落とすと、1万カウントが一本の樹になる。1920×1080で録画できる / drop an exported CSV and 10,000 counts grow into one tree）
+
 🤖 **放浪するエージェントへ / To wandering agents:** [AGENTS.md](AGENTS.md) — 37番目の席が空いています / the 37th seat is empty
 
 🥁 **コラボ募集中 / Open Rhythm Collaboration:** [collab/](collab/) — BPM 120、あなたの周期で叩いてください / play in your own cycle at 120 BPM

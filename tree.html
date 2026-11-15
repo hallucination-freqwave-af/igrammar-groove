@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>異文法の樹 — iGrammar Tree</title>
+<style>
+html,body{margin:0;height:100%;background:#f2f0ea;overflow:hidden;font-family:"Hiragino Mincho ProN","Yu Mincho",serif;color:#222}
+canvas{display:block;margin:auto}
+#hud{position:fixed;left:24px;top:20px;font-size:12px;letter-spacing:.08em;pointer-events:none;line-height:1.9}
+#cnt{font-size:28px;font-weight:300;letter-spacing:.05em}
+#ten{height:1px;background:#222;width:0;margin-top:6px}
+#frz{color:#3a5a7a;min-height:1em}
+#ev{position:fixed;left:24px;bottom:70px;font-size:12px;letter-spacing:.06em;line-height:1.8;pointer-events:none;opacity:.8}
+#ev .r{color:#b3122a}
+#bar{position:fixed;left:24px;right:24px;bottom:22px;display:flex;gap:10px;align-items:center;font-size:12px;flex-wrap:wrap}
+#bar button,#bar label,#bar select{background:none;border:1px solid #888;border-radius:2px;padding:3px 10px;font:inherit;color:#222;cursor:pointer}
+#bar button.on{border-color:#222;background:#222;color:#f2f0ea}
+#bar button.rec{border-color:#b3122a;color:#b3122a}
+#seek{flex:1;min-width:120px;accent-color:#222}
+#drop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(242,240,234,.9);font-size:16px;letter-spacing:.1em;border:1px dashed #222;margin:12px}
+#msg{position:fixed;right:24px;top:20px;font-size:12px;letter-spacing:.06em;text-align:right;max-width:46ch;line-height:1.7}
+#msg a{color:#222}
+</style></head><body>
+<div id="hud"><div id="cnt">0</div><div id="ttl">異文法の樹</div><div id="ten"></div><div id="frz"></div></div>
+<div id="msg">異文法グルーヴで書き出したCSVを、この画面に落とすと樹になる。<br><a href="./">← 異文法グルーヴ</a></div>
+<div id="ev"></div>
+<div id="drop">CSVを離すと樹になる</div>
+<div id="bar">
+ <button id="pp">▶</button><button data-s="1">1×</button><button data-s="4" class="on">4×</button><button data-s="16">16×</button>
+ <input id="seek" type="range" min="0" max="10000" value="0"><button id="end">全体</button>
+ <select id="world" hidden></select>
+ <label>CSVを開く<input id="file" type="file" accept=".csv,text/csv" hidden></label>
+ <button id="rec" title="先頭から最後まで、1カウント1コマ・30fps・1920×1080で録る">録画（1920×1080）</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// 異文法の樹：強く鳴った数え方の枝が一節ずつ伸び、最後のカウントで一本の樹ができあがる。
+// 枝分かれは各数え方の一周から（素数・非周期は分かれずにねじれて伸びる。素因数の種類が多いほど分かれる）。
+// 衝突で枝が曲がり、拒否で次の一節が切れる。居ない数え方は薄い。赤は第3の拍（生まれた時の二つの枝先を結ぶ）。
+// 回転は緊張で速くなり、凍結中は止まる。
+const NAMES={yo:'ヨルバ',sx:'60進',sg:'算木',mx:'マヤ',ik:'インカ',gr:'ギリシャ',sb:'算盤',bi:'2進（易経）',tp:'トポロジー',ek:'易',pr:'素数',rd:'崩壊（三段目）',sr:'シューマン共振',hm:'地球のハム',su:'太陽の5分振動',td:'潮',hb:'呼吸と心拍',cs:'セシウム（1秒）',bd:'体（パプアニューギニア）',eg:'エジプト',hf:'ひふみ',fr:'フランス語',rm:'ローマ数字',bt:'蝙蝠',et:'干支',vn:'金星（マヤ）',tl:'ターラ（インド）',cv:'クラーヴェ（キューバ）',wk:'曜日',ci:'周期ゼミ',fb:'フィボナッチ',mn:'万進（漢字圏）',sk:'二十四節気',js:'助数詞（本）',im:'虚数'};
+const BYNAME={};for(const k in NAMES)BYNAME[NAMES[k]]=k;
+function cycle(id,p){return ({im:4,yo:p.yoMark,sx:p.sxC,sg:p.sgB,mx:p.mxLev,ik:p.ikB,gr:10,sb:5,bi:8,tp:10,ek:p.ekL,et:12,vn:8,tl:16,cv:16,wk:7,ci:13,fb:0,pr:0,rd:0,sr:32,hm:64,su:30,td:p.tdS,hb:p.hbB,cs:60,bd:p.bdN,eg:32,hf:10,fr:100,rm:10,bt:p.batC,mn:Math.pow(p.mnB||4,4),sk:15,js:10})[id]||0}
+function kOf(n){n=Math.round(n);if(n<2)return 1;for(let q=2;q*q<=n;q++)if(n%q===0){let c=0,m=n;for(let p=2;p<=m;p++)if(m%p===0){c++;while(m%p===0)m/=p}return Math.min(4,c+1)}return 1}
+const short=s=>s.replace(/（.*?）/g,'');
+function parseCSV(t){const rows=[];let row=[],f='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}else if(c==='"')q=true;else if(c===','){row.push(f);f=''}else if(c==='\n'){row.push(f.replace(/\r$/,''));rows.push(row);row=[];f=''}else f+=c}if(f||row.length){row.push(f);rows.push(row)}return rows}
+
+// ---- 描画の土台 ----
+const V=THREE.Vector3;
+const ren=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});ren.setPixelRatio(devicePixelRatio);ren.setClearColor(0xf2f0ea);document.body.prepend(ren.domElement);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.1,200),root=new THREE.Group();scene.add(root);
+function fit(){if(recState)return;ren.setPixelRatio(devicePixelRatio);ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+let T=null; // 今の樹
+const BG=[.949,.941,.918],INK=[.08,.08,.08],RED=[.70,.07,.16];
+
+function build(rows,worldName){
+  const head=rows[0],ci=n=>head.indexOf(n);
+  const C={world:ci('世界'),n:ci('カウント'),strong:ci('強く鳴った'),ten:ci('緊張'),shk:ci('衝突でずれた'),shd:ci('ずれ'),ref:ci('拒否した'),frz:ci('凍結中'),born:ci('第3の拍 誕生'),tick:ci('第3の拍 鳴った'),away:ci('居ない')};
+  if(C.strong<0||C.away<0)throw new Error('このCSVは毎カウントの記録ではないようです（「強く鳴った」「居ない」の列が要る）');
+  const condRow=rows.find(r=>r[0]==='条件');let cond={};try{cond=JSON.parse(condRow[1])}catch(e){}
+  const P=cond.parameters||{};
+  const codes=(cond.lanes||Object.keys(NAMES)).filter(k=>k!=='cl'&&NAMES[k]);
+  const li={};codes.forEach((k,i)=>li[k]=i);const N=codes.length;
+  const R=rows.filter(r=>r[0]===worldName&&r[C.n]&&!isNaN(+r[C.n]));
+  const L=s=>(s||'').split('／').map(x=>BYNAME[x]).filter(k=>k!=null&&li[k]!=null).map(k=>li[k]);
+  const frames=R.map(r=>({s:L(r[C.strong]),a:new Set(L(r[C.away])),t:+r[C.ten]||0,f:r[C.frz]==='1',sh:r[C.shk]?L(r[C.shk]):[],sd:(r[C.shd]||'').split('／').map(Number),rf:L(r[C.ref]),b:(r[C.born]||'').split(/\s+/).filter(Boolean).map(x=>x.split(':')[0].split('|')),tk:(r[C.tick]||'').split(/\s+/).filter(Boolean).map(x=>x.split(':')[0])}));
+  const TOTAL=frames.length;
+  const ringN=new Array(N).fill(0);frames.forEach(f=>f.s.forEach(l=>ringN[l]++));
+  const ga=Math.PI*(3-Math.sqrt(5));
+  const lanes=codes.map((c,i)=>{const y=1-(i+.5)/N*2,r=Math.sqrt(1-y*y),th=ga*i,dir=new V(Math.cos(th)*r,y,Math.sin(th)*r);
+    const side=new V().crossVectors(dir,Math.abs(dir.y)<.9?new V(0,1,0):new V(1,0,0)).normalize(),k=kOf(cycle(c,P)),step=3.2/Math.max(1,ringN[i]),p0=dir.clone().multiplyScalar(.25);
+    return {c,i,k,dir,side,step,bend:0,refuse:false,queue:[{p:p0,d:dir.clone(),l:k===1?step:.55,depth:0}],qi:0,tip:p0}});
+  const segP=[],segL=[],segK=[],segB=[],reds=[],evAt={},rot=[0],q=new THREE.Quaternion();
+  const addEv=(k,s)=>(evAt[k]=evAt[k]||[]).push(s);
+  function grow(Ln,k){const node=Ln.queue[Ln.qi];if(!node)return;Ln.qi++;
+    const d=node.d.clone();q.setFromAxisAngle(Ln.side,Ln.bend*.15);d.applyQuaternion(q);
+    const end=node.p.clone().add(d.clone().multiplyScalar(node.l)),broken=Ln.refuse;Ln.refuse=false;
+    const e2=broken?node.p.clone().add(d.clone().multiplyScalar(node.l*.25)):end;
+    segP.push(node.p.x,node.p.y,node.p.z,e2.x,e2.y,e2.z);segL.push(Ln.i);segK.push(k);segB.push(broken?1:0);Ln.tip=end;
+    if(Ln.k===1){const ax=new V().crossVectors(d,Ln.side).normalize(),a=Ln.step/.3;const nd=d.clone().applyAxisAngle(ax,a).applyAxisAngle(Ln.dir,a*.6).normalize();nd.lerp(Ln.dir,.03).normalize();Ln.queue.push({p:end,d:nd,l:Ln.step,depth:node.depth+1})}
+    else{const spread=.55+.25/Ln.k,perp=new V().crossVectors(d,Ln.side);if(perp.lengthSq()<1e-6)perp.set(0,1,0);perp.normalize();
+      for(let j=0;j<Ln.k;j++){const ax=perp.clone().applyAxisAngle(d,j/Ln.k*Math.PI*2+node.depth*.9+Ln.i);Ln.queue.push({p:end,d:d.clone().applyAxisAngle(ax,spread).normalize(),l:node.l*.82,depth:node.depth+1})}}}
+  let a=0;
+  frames.forEach((f,ix)=>{const k=ix+1;
+    f.sh.forEach((l,j)=>{const s=f.sd[j]||f.sd[0]||0;lanes[l].bend+=s;addEv(k,'衝突　'+short(NAMES[codes[l]])+'　'+(s>0?'+':'')+s)});
+    f.rf.forEach(l=>{lanes[l].refuse=true;addEv(k,'拒否　'+short(NAMES[codes[l]]))});
+    f.b.forEach(([x,y])=>{if(li[x]==null||li[y]==null)return;reds.push([k,x+'|'+y,lanes[li[x]].tip.clone(),lanes[li[y]].tip.clone()]);addEv(k,'<span class=r>第3の拍　'+short(NAMES[x])+' × '+short(NAMES[y])+'</span>')});
+    f.s.forEach(l=>grow(lanes[l],k));
+    if(!f.f)a+=.0012+Math.min(24,f.t)*.0004;rot[k]=a});
+  // 幾何
+  while(root.children.length){const o=root.children.pop();o.geometry.dispose();o.material.dispose()}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(segP,3));
+  const col=new Float32Array(segP.length);g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  root.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true})));
+  const rp=[],rk=[],SEG=16;
+  for(const [k,pk,A,B] of reds){const M=A.clone().add(B).multiplyScalar(.275);let prev=A;
+    for(let s=1;s<=SEG;s++){const t=s/SEG,u=1-t,P3=new V(u*u*A.x+2*u*t*M.x+t*t*B.x,u*u*A.y+2*u*t*M.y+t*t*B.y,u*u*A.z+2*u*t*M.z+t*t*B.z);rp.push(prev.x,prev.y,prev.z,P3.x,P3.y,P3.z);prev=P3}rk.push(k)}
+  const rg=new THREE.BufferGeometry();rg.setAttribute('position',new THREE.Float32BufferAttribute(rp,3));
+  const rc=new Float32Array(rp.length);rg.setAttribute('color',new THREE.BufferAttribute(rc,3));
+  root.add(new THREE.LineSegments(rg,new THREE.LineBasicMaterial({vertexColors:true})));
+  return {frames,TOTAL,codes,segL,segK,segB,g,col,rg,rc,rk,redPk:reds.map(r=>r[1]),SEG,evAt,rot,label:worldName+(cond.world?' ／ 世界'+cond.world:'')+(cond.seed?' ／ 種 '+cond.seed:'')};
+}
+
+// ---- 再生 ----
+let cur=0,play=false,speed=4,el=.35,dist=13,drag=null,yawOff=0,evLog=[],recState=null;
+const $=id=>document.getElementById(id);
+function lower(arr,k){let lo=0,hi=arr.length;while(lo<hi){const m=(lo+hi)>>1;if(arr[m]<=k)lo=m+1;else hi=m}return lo}
+function paint(){if(!T)return;const k=Math.round(cur),f=T.frames[k-1];
+  const n=lower(T.segK,k);T.g.setDrawRange(0,n*2);const col=T.col;
+  for(let s=0;s<n;s++){const age=k-T.segK[s];let m=(f&&f.a.has(T.segL[s]))?.13:.62;if(age<40)m+=(1-age/40)*.38;if(T.segB[s])m*=.6;
+    const o=s*6;for(let c=0;c<3;c++){const v=BG[c]+(INK[c]-BG[c])*m;col[o+c]=v;col[o+3+c]=v}}
+  T.g.attributes.color.needsUpdate=true;
+  const rn=lower(T.rk,k);T.rg.setDrawRange(0,rn*T.SEG*2);const lit=new Set();
+  for(let j=Math.max(1,k-12);j<=k;j++){const fr=T.frames[j-1];if(fr)fr.tk.forEach(x=>lit.add(x))}
+  for(let r=0;r<rn;r++){const m=(lit.has(T.redPk[r])||k-T.rk[r]<20)?1:.55;for(let v=0;v<T.SEG*2;v++){const o=(r*T.SEG*2+v)*3;for(let c=0;c<3;c++)T.rc[o+c]=BG[c]+(RED[c]-BG[c])*m}}
+  T.rg.attributes.color.needsUpdate=true;
+  $('cnt').textContent=k.toLocaleString();$('seek').value=k;$('frz').textContent=f&&f.f?'凍結中':'';$('ten').style.width=(f?Math.min(24,f.t)/24*160:0)+'px';}
+function camAt(){const k=Math.floor(cur),fr=cur-k,r=T?((T.rot[k]||0)*(1-fr)+(T.rot[Math.min(T.TOTAL,k+1)]||T.rot[k]||0)*fr):0,yaw=r+yawOff;
+  cam.position.set(Math.cos(yaw)*Math.cos(el)*dist,Math.sin(el)*dist,Math.sin(yaw)*Math.cos(el)*dist);cam.lookAt(0,0,0)}
+function logTo(k0,k){if(!T)return;if(k<k0){evLog=[];return}for(let j=k0+1;j<=k;j++)if(T.evAt[j])evLog=evLog.concat(T.evAt[j].map(s=>j+'　'+s));evLog=evLog.slice(-6);$('ev').innerHTML=evLog.join('<br>')}
+let last=performance.now();
+function loop(t){const dt=Math.min(.1,(t-last)/1000);last=t;
+  if(recState){recFrame();requestAnimationFrame(loop);return}
+  const k0=Math.round(cur);if(play&&T){cur=Math.min(T.TOTAL,cur+speed*30*dt);if(cur>=T.TOTAL)setPlay(false)}
+  logTo(k0,Math.round(cur));camAt();paint();ren.render(scene,cam);requestAnimationFrame(loop)}
+function setPlay(v){play=v;$('pp').textContent=v?'❚❚':'▶'}
+
+// ---- 録画：1カウント1コマ、30fps、1920×1080。HUDも焼き込む ----
+function recStart(){if(!T||recState)return;
+  if(!window.MediaRecorder){$('msg').textContent='このブラウザは録画に対応していません';return}
+  const out=document.createElement('canvas');out.width=1920;out.height=1080;const ox=out.getContext('2d');
+  ren.setPixelRatio(1);ren.setSize(1920,1080,false);ren.domElement.style.width='100vw';ren.domElement.style.height=(100*1080/1920)+'vw';cam.aspect=1920/1080;cam.updateProjectionMatrix();
+  const type=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm'].find(x=>MediaRecorder.isTypeSupported(x))||'';
+  const stream=out.captureStream(0),track=stream.getVideoTracks()[0],chunks=[];
+  const mr=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:16e6});mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  mr.onstop=()=>{const blob=new Blob(chunks,{type:type||'video/webm'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='異文法の樹_'+Date.now()+(type.includes('mp4')?'.mp4':'.webm');document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),1000);recState=null;$('rec').classList.remove('rec');$('rec').textContent='録画（1920×1080）';ren.domElement.style.width='';ren.domElement.style.height='';fit();$('msg').textContent=type.includes('mp4')?'MP4を保存した':'WebMで保存した（このブラウザはMP4で録れない）'};
+  cur=0;evLog=[];setPlay(false);recState={mr,track,ox,out,k:0,next:performance.now()};mr.start();$('rec').classList.add('rec');$('rec').textContent='録画中…（押すと止める）'}
+function recFrame(){const R=recState,now=performance.now();if(now<R.next)return;R.next=Math.max(R.next+1000/30,now-50);
+  const k0=R.k;R.k++;cur=R.k;logTo(k0,R.k);camAt();paint();ren.render(scene,cam);
+  const o=R.ox;o.drawImage(ren.domElement,0,0,1920,1080);o.fillStyle='#222';o.font='300 52px "Hiragino Mincho ProN",serif';o.fillText(R.k.toLocaleString(),48,96);
+  o.font='22px "Hiragino Mincho ProN",serif';o.fillText(T.label,48,140);const f=T.frames[R.k-1];if(f&&f.f){o.fillStyle='#3a5a7a';o.fillText('凍結中',48,176)}
+  evLog.forEach((s,i)=>{const red=s.includes('class=r');o.fillStyle=red?'#b3122a':'rgba(34,34,34,.8)';o.fillText(s.replace(/<[^>]+>/g,''),48,1080-60-(evLog.length-1-i)*34)});
+  R.track.requestFrame();$('msg').textContent='録画中 '+R.k+' / '+T.TOTAL;
+  if(R.k>=T.TOTAL){R.mr.stop()}}
+
+// ---- 読み込み ----
+let rowsNow=null;
+function load(text,src){try{const rows=parseCSV(text.replace(/^﻿/,''));const ws=[...new Set(rows.slice(1).map(r=>r[0]).filter(w=>w&&w!=='条件'))];
+  if(!ws.length)throw new Error('記録の行がない');rowsNow=rows;const sel=$('world');sel.innerHTML=ws.map(w=>'<option>'+w+'</option>').join('');sel.hidden=ws.length<2;
+  use(ws[0]);$('msg').innerHTML=src+'<br><a href="./">← 異文法グルーヴ</a>'}catch(e){$('msg').textContent='読めなかった：'+e.message}}
+function use(w){T=build(rowsNow,w);$('seek').max=T.TOTAL;$('ttl').textContent='異文法の樹 ／ '+T.label;cur=T.TOTAL;evLog=[];setPlay(false)}
+$('world').onchange=()=>use($('world').value);
+$('file').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(t=>load(t,f.name))};
+addEventListener('dragover',e=>{e.preventDefault();$('drop').style.display='flex'});
+addEventListener('dragleave',e=>{if(e.target===$('drop'))$('drop').style.display='none'});
+addEventListener('drop',e=>{e.preventDefault();$('drop').style.display='none';const f=e.dataTransfer.files[0];if(f)f.text().then(t=>load(t,f.name))});
+$('pp').onclick=()=>{if(!T)return;if(cur>=T.TOTAL){cur=0;evLog=[]}setPlay(!play)};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('on',x===b))});
+$('seek').oninput=()=>{cur=+$('seek').value;evLog=[]};
+$('end').onclick=()=>{if(!T)return;cur=T.TOTAL;evLog=[];setPlay(false)};
+$('rec').onclick=()=>{if(recState){recState.mr.stop();return}recStart()};
+ren.domElement.onpointerdown=e=>drag={x:e.clientX,y:e.clientY,r:yawOff,e:el};
+addEventListener('pointerup',()=>drag=null);
+addEventListener('pointermove',e=>{if(!drag)return;yawOff=drag.r+(e.clientX-drag.x)*.006;el=Math.max(-1.4,Math.min(1.4,drag.e+(e.clientY-drag.y)*.006))});
+addEventListener('wheel',e=>{dist=Math.max(3,Math.min(40,dist*(1+e.deltaY*.001)))});
+addEventListener('resize',fit);fit();
+fetch('samples/galaxy-D-seed2638928241.csv').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>load(t,'サンプル（世界D・種 2638928241）。自分のCSVを落とすと入れ替わる。')).catch(()=>{});
+requestAnimationFrame(loop);
+</script></body></html>
